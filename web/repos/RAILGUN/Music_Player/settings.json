@@ -1,0 +1,67 @@
+{
+    "window": {
+        "width": 1200,
+        "height": 800,
+        "x": 100,
+        "y": 100
+    },
+    "paths": {
+        "data": "./Data",
+        "ffmpeg": "./ffmpeg.exe",
+        "download": "./Data/Downloads"
+    },
+    "features": {
+        "ai_chat": true,
+        "auto_update": false,
+        "diagnostic_cooldown": 60
+    },
+    "ui": {
+        "theme": {
+            "frame_bg": "#1f0b2b",
+            "accent": "#7b3fe4",
+            "text": "#ECEAF6"
+        },
+        "entry_background": ""
+    },
+    "ai": {
+        "default_provider": "openai",
+        "providers": {
+            "openai": {
+                "name": "OpenAI",
+                "api_key": "",
+                "base_url": "https://api.openai.com/v1",
+                "model": "gpt-3.5-turbo",
+                "temperature": 0.7,
+                "max_tokens": 2000,
+                "stream": true
+            },
+            "deepseek": {
+                "name": "DeepSeek",
+                "api_key": "",
+                "base_url": "https://api.deepseek.com",
+                "model": "deepseek-chat",
+                "temperature": 0.7,
+                "max_tokens": 2000,
+                "stream": true
+            },
+            "zhipu": {
+                "name": "智谱AI",
+                "api_key": "",
+                "base_url": "https://open.bigmodel.cn/api/paas/v4",
+                "model": "glm-4",
+                "temperature": 0.7,
+                "max_tokens": 2000,
+                "stream": true
+            },
+            "custom": {
+                "name": "自定义",
+                "api_key": "",
+                "base_url": "",
+                "model": "",
+                "temperature": 0.7,
+                "max_tokens": 2000,
+                "stream": true
+            }
+        }
+    }
+}

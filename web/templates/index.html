@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码托管</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📦 代码托管</h1>
+            <p>本地GitHub风格代码仓库</p>
+        </header>
+        
+        <div class="repo-list" id="repoList">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+    
+    <script>
+        async function loadRepos() {
+            try {
+                const response = await fetch('/api/repos');
+                const repos = await response.json();
+                
+                const container = document.getElementById('repoList');
+                
+                if (repos.length === 0) {
+                    container.innerHTML = '<div class="empty">暂无仓库</div>';
+                    return;
+                }
+                
+                container.innerHTML = repos.map(repo => `
+                    <div class="repo-card" onclick="window.location.href='/repo/${repo.name}'">
+                        <h3>${repo.name}</h3>
+                        <p>${repo.description || '暂无描述'}</p>
+                        <div class="repo-meta">
+                            <span>📁 ${repo.files?.length || 0} 文件</span>
+                            <span>📅 ${new Date(repo.updated).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载仓库失败:', error);
+            }
+        }
+        
+        loadRepos();
+    </script>
+</body>
+</html>

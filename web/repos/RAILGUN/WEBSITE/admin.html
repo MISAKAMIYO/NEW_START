@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - RAILGUN</title>
+    <link rel="stylesheet" href="css/modern.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="loginPage" class="admin-login-page">
+        <div class="admin-login-container">
+            <div class="admin-login-card">
+                <div class="admin-login-logo">
+                    <div class="logo-icon">⚡</div>
+                    <h1>RAILGUN</h1>
+                    <p>管理后台登录</p>
+                </div>
+
+                <div class="admin-login-tabs">
+                    <button class="admin-login-tab active" data-role="user" onclick="selectRole('user')">用户</button>
+                    <button class="admin-login-tab" data-role="admin" onclick="selectRole('admin')">管理员</button>
+                </div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label">用户名 / 邮箱</label>
+                        <input type="text" id="loginUsername" class="form-input" placeholder="请输入用户名或邮箱" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">密码</label>
+                        <input type="password" id="loginPassword" class="form-input" placeholder="请输入密码" required>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="rememberMe">
+                            <span style="font-size: 14px; color: var(--text-secondary);">记住我</span>
+                        </label>
+                        <a href="#" style="font-size: 14px; color: var(--primary-light);">忘记密码？</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                            <polyline points="10 17 15 12 10 7"/>
+                            <line x1="15" y1="12" x2="3" y2="12"/>
+                        </svg>
+                        登录
+                    </button>
+                </form>
+
+                <div class="admin-login-footer">
+                    还没有账号？<a href="#" onclick="showRegister()">立即注册</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminLayout" class="admin-layout" style="display: none;">
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="admin-logo">
+                <span class="logo-icon">⚡</span>
+                <span class="admin-logo-text">RAILGUN</span>
+            </div>
+
+            <nav class="admin-nav">
+                <div class="admin-nav-section">
+                    <div class="admin-nav-title">概览</div>
+                    <div class="admin-nav-item active" data-page="dashboard" onclick="showAdminPage('dashboard')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="9"/>
+                            <rect x="14" y="3" width="7" height="5"/>
+                            <rect x="14" y="12" width="7" height="9"/>
+                            <rect x="3" y="16" width="7" height="5"/>
+                        </svg>
+                        <span>仪表盘</span>
+                    </div>
+                </div>
+
+                <div class="admin-nav-section user-only-section">
+                    <div class="admin-nav-title">个人中心</div>
+                    <div class="admin-nav-item" data-page="profile" onclick="showAdminPage('profile')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <span>我的资料</span>
+                    </div>
+                    <div class="admin-nav-item" data-page="history" onclick="showAdminPage('history')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span>使用记录</span>
+                    </div>
+                    <div class="admin-nav-item" data-page="settings" onclick="showAdminPage('settings')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        <span>偏好设置</span>
+                    </div>
+                </div>
+
+                <div class="admin-nav-section admin-only-section" style="display: none;">
+                    <div class="admin-nav-title">系统管理</div>
+                    <div class="admin-nav-item" data-page="users" onclick="showAdminPage('users')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        <span>用户管理</span>
+                    </div>
+                    <div class="admin-nav-item" data-page="analytics" onclick="showAdminPage('analytics')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                        </svg>
+                        <span>数据分析</span>
+                    </div>
+                    <div class="admin-nav-item" data-page="logs" onclick="showAdminPage('logs')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                        <span>操作日志</span>
+                    </div>
+                    <div class="admin-nav-item" data-page="system" onclick="showAdminPage('system')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                            <line x1="8" y1="21" x2="16" y2="21"/>
+                            <line x1="12" y1="17" x2="12" y2="21"/>
+                        </svg>
+                        <span>系统状态</span>
+                    </div>
+                    <div class="admin-nav-item" data-page="config" onclick="showAdminPage('config')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span>系统配置</span>
+                    </div>
+                </div>
+
+                <div class="admin-nav-section">
+                    <div class="admin-nav-title">快捷入口</div>
+                    <div class="admin-nav-item" onclick="window.open('tools.html', '_blank')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="2" y1="12" x2="22" y2="12"/>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                        </svg>
+                        <span>在线工具</span>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="admin-main">
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <button class="admin-toggle" onclick="toggleSidebar()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12"/>
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
+                    <div class="admin-breadcrumb">
+                        <a href="index.html">首页</a>
+                        <span>/</span>
+                        <span id="breadcrumbCurrent">仪表盘</span>
+                    </div>
+                </div>
+                <div class="admin-header-right">
+                    <div class="admin-search">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                        <input type="text" placeholder="搜索...">
+                    </div>
+                    <div class="admin-notifications">
+                        <button class="admin-notifications-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                            </svg>
+                        </button>
+                        <span class="admin-notifications-badge"></span>
+                    </div>
+                    <div class="admin-user" onclick="showUserMenu()">
+                        <div class="admin-user-avatar" id="userAvatar">U</div>
+                        <div class="admin-user-info">
+                            <div class="admin-user-name" id="userName">用户名</div>
+                            <div class="admin-user-role" id="userRole">用户</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="admin-content">
+                <div id="pageDashboard" class="admin-page">
+                    <div class="admin-stats">
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon blue">👥</div>
+                            <div class="admin-stat-info">
+                                <h3 id="totalUsers">1,234</h3>
+                                <p>总用户数</p>
+                            </div>
+                            <span class="admin-stat-trend up">↑ 12%</span>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon green">🎵</div>
+                            <div class="admin-stat-info">
+                                <h3 id="totalDownloads">56.7k</h3>
+                                <p>音乐下载量</p>
+                            </div>
+                            <span class="admin-stat-trend up">↑ 8%</span>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon orange">🤖</div>
+                            <div class="admin-stat-info">
+                                <h3 id="aiConversations">89.2k</h3>
+                                <p>AI 对话次数</p>
+                            </div>
+                            <span class="admin-stat-trend up">↑ 23%</span>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon purple">⬇️</div>
+                            <div class="admin-stat-info">
+                                <h3 id="videoDownloads">12.3k</h3>
+                                <p>视频下载量</p>
+                            </div>
+                            <span class="admin-stat-trend down">↓ 3%</span>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+                        <div class="admin-card">
+                            <div class="admin-card-header">
+                                <h3 class="admin-card-title">近 7 日活跃度</h3>
+                                <select class="form-input" style="width: auto; padding: 6px 12px;">
+                                    <option>近 7 天</option>
+                                    <option>近 30 天</option>
+                                    <option>近 90 天</option>
+                                </select>
+                            </div>
+                            <div class="admin-chart" id="activityChart"></div>
+                        </div>
+                        <div class="admin-card">
+                            <div class="admin-card-header">
+                                <h3 class="admin-card-title">最新动态</h3>
+                            </div>
+                            <div class="admin-logs" id="recentActivity">
+                                <div class="admin-log-item">
+                                    <span class="admin-log-time">10:23</span>
+                                    <div class="admin-log-content">
+                                        <div class="admin-log-user">张三</div>
+                                        <div class="admin-log-action">下载了音乐《夜空中最亮的星》</div>
+                                    </div>
+                                    <span class="admin-log-type info">下载</span>
+                                </div>
+                                <div class="admin-log-item">
+                                    <span class="admin-log-time">10:15</span>
+                                    <div class="admin-log-content">
+                                        <div class="admin-log-user">李四</div>
+                                        <div class="admin-log-action">使用了 AI 对话功能</div>
+                                    </div>
+                                    <span class="admin-log-type success">AI</span>
+                                </div>
+                                <div class="admin-log-item">
+                                    <span class="admin-log-time">09:45</span>
+                                    <div class="admin-log-content">
+                                        <div class="admin-log-user">王五</div>
+                                        <div class="admin-log-action">下载了视频《Python 入门教程》</div>
+                                    </div>
+                                    <span class="admin-log-type info">下载</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pageUsers" class="admin-page" style="display: none;">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">用户管理</h3>
+                            <div style="display: flex; gap: 12px;">
+                                <input type="text" class="form-input" placeholder="搜索用户..." style="width: 200px;">
+                                <button class="btn btn-primary" onclick="showAddUserModal()">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="5" x2="12" y2="19"/>
+                                        <line x1="5" y1="12" x2="19" y2="12"/>
+                                    </svg>
+                                    添加用户
+                                </button>
+                            </div>
+                        </div>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>用户</th>
+                                    <th>邮箱</th>
+                                    <th>角色</th>
+                                    <th>状态</th>
+                                    <th>注册时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td>
+                                        <div class="admin-user-cell">
+                                            <div class="avatar">张</div>
+                                            <span>张三</span>
+                                        </div>
+                                    </td>
+                                    <td>zhangsan@example.com</td>
+                                    <td><span class="badge badge-primary">管理员</span></td>
+                                    <td><span class="admin-status active">●</span> 正常</td>
+                                    <td>2026-01-15</td>
+                                    <td>
+                                        <div class="admin-actions">
+                                            <button class="admin-action-btn edit" title="编辑">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                                </svg>
+                                            </button>
+                                            <button class="admin-action-btn delete" title="删除">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="3 6 5 6 21 6"/>
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="admin-user-cell">
+                                            <div class="avatar">李</div>
+                                            <span>李四</span>
+                                        </div>
+                                    </td>
+                                    <td>lisi@example.com</td>
+                                    <td><span class="badge" style="background: var(--bg-elevated); color: var(--text-secondary);">用户</span></td>
+                                    <td><span class="admin-status active">●</span> 正常</td>
+                                    <td>2026-02-01</td>
+                                    <td>
+                                        <div class="admin-actions">
+                                            <button class="admin-action-btn edit" title="编辑">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                                </svg>
+                                            </button>
+                                            <button class="admin-action-btn delete" title="删除">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <polyline points="3 6 5 6 21 6"/>
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="admin-pagination">
+                            <div class="admin-pagination-info">显示 1-10 条，共 1234 条</div>
+                            <div class="admin-pagination-buttons">
+                                <button class="admin-pagination-btn">上一页</button>
+                                <button class="admin-pagination-btn active">1</button>
+                                <button class="admin-pagination-btn">2</button>
+                                <button class="admin-pagination-btn">3</button>
+                                <button class="admin-pagination-btn">...</button>
+                                <button class="admin-pagination-btn">124</button>
+                                <button class="admin-pagination-btn">下一页</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pageProfile" class="admin-page" style="display: none;">
+                    <div class="admin-card" style="max-width: 600px;">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">个人资料</h3>
+                        </div>
+                        <div style="padding: 24px;">
+                            <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 32px;">
+                                <div class="admin-user-avatar" style="width: 80px; height: 80px; font-size: 32px;" id="profileAvatar">U</div>
+                                <div>
+                                    <button class="btn btn-secondary btn-sm">更换头像</button>
+                                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">支持 JPG、PNG 格式，大小不超过 2MB</p>
+                                </div>
+                            </div>
+                            <div class="admin-settings-grid">
+                                <div class="form-group">
+                                    <label class="form-label">用户名</label>
+                                    <input type="text" class="form-input" id="profileUsername" value="用户名">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">显示名称</label>
+                                    <input type="text" class="form-input" id="profileDisplayName" value="显示名称">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">邮箱</label>
+                                    <input type="email" class="form-input" id="profileEmail" value="user@example.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">手机号码</label>
+                                    <input type="tel" class="form-input" id="profilePhone" placeholder="请输入手机号码">
+                                </div>
+                            </div>
+                            <div style="margin-top: 24px;">
+                                <button class="btn btn-primary">保存修改</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pageAnalytics" class="admin-page" style="display: none;">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">数据分析</h3>
+                            <select class="form-input" style="width: auto;">
+                                <option>最近 7 天</option>
+                                <option>最近 30 天</option>
+                                <option>最近 90 天</option>
+                                <option>自定义</option>
+                            </select>
+                        </div>
+                        <div style="padding: 24px;">
+                            <div id="analyticsChart" class="admin-chart" style="height: 400px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pageLogs" class="admin-page" style="display: none;">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">操作日志</h3>
+                            <div style="display: flex; gap: 12px;">
+                                <select class="form-input" style="width: auto;">
+                                    <option>全部类型</option>
+                                    <option>用户登录</option>
+                                    <option>下载记录</option>
+                                    <option>AI 对话</option>
+                                    <option>系统操作</option>
+                                </select>
+                                <input type="date" class="form-input" style="width: auto;">
+                            </div>
+                        </div>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>用户</th>
+                                    <th>操作</th>
+                                    <th>详情</th>
+                                    <th>IP 地址</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTableBody">
+                                <tr>
+                                    <td>2026-02-15 10:23:45</td>
+                                    <td>张三</td>
+                                    <td><span class="admin-log-type info">登录</span></td>
+                                    <td>用户登录成功</td>
+                                    <td>192.168.1.100</td>
+                                </tr>
+                                <tr>
+                                    <td>2026-02-15 10:22:18</td>
+                                    <td>李四</td>
+                                    <td><span class="admin-log-type success">下载</span></td>
+                                    <td>下载音乐: 夜空中最亮的星</td>
+                                    <td>192.168.1.101</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="admin-pagination">
+                            <div class="admin-pagination-info">显示 1-10 条，共 5678 条</div>
+                            <div class="admin-pagination-buttons">
+                                <button class="admin-pagination-btn">上一页</button>
+                                <button class="admin-pagination-btn active">1</button>
+                                <button class="admin-pagination-btn">下一页</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pageConfig" class="admin-page" style="display: none;">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">系统配置</h3>
+                        </div>
+                        <div class="admin-settings-section">
+                            <h4 class="admin-settings-title">基本设置</h4>
+                            <div class="admin-settings-grid">
+                                <div class="form-group">
+                                    <label class="form-label">网站名称</label>
+                                    <input type="text" class="form-input" value="RAILGUN">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">网站 URL</label>
+                                    <input type="url" class="form-input" value="http://localhost:5000">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="admin-settings-section">
+                            <h4 class="admin-settings-title">功能开关</h4>
+                            <div class="admin-form-toggle">
+                                <span>允许新用户注册</span>
+                                <div class="admin-toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                            </div>
+                            <div class="admin-form-toggle">
+                                <span>启用 AI 对话功能</span>
+                                <div class="admin-toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                            </div>
+                            <div class="admin-form-toggle">
+                                <span>启用下载功能</span>
+                                <div class="admin-toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                            </div>
+                            <div class="admin-form-toggle">
+                                <span>启用宏控制功能</span>
+                                <div class="admin-toggle-switch" onclick="this.classList.toggle('active')"></div>
+                            </div>
+                        </div>
+                        <div style="padding: 24px;">
+                            <button class="btn btn-primary">保存配置</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pageSettings" class="admin-page" style="display: none;">
+                    <div class="admin-card" style="max-width: 600px;">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">偏好设置</h3>
+                        </div>
+                        <div class="admin-settings-section">
+                            <h4 class="admin-settings-title">显示设置</h4>
+                            <div class="admin-form-toggle">
+                                <span>深色模式</span>
+                                <div class="admin-toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                            </div>
+                            <div class="admin-form-toggle">
+                                <span>显示动画效果</span>
+                                <div class="admin-toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                            </div>
+                        </div>
+                        <div class="admin-settings-section">
+                            <h4 class="admin-settings-title">通知设置</h4>
+                            <div class="admin-form-toggle">
+                                <span>邮件通知</span>
+                                <div class="admin-toggle-switch" onclick="this.classList.toggle('active')"></div>
+                            </div>
+                            <div class="admin-form-toggle">
+                                <span>下载完成提醒</span>
+                                <div class="admin-toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                            </div>
+                        </div>
+                        <div style="padding: 24px;">
+                            <button class="btn btn-primary">保存设置</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pageHistory" class="admin-page" style="display: none;">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">使用记录</h3>
+                        </div>
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>类型</th>
+                                    <th>内容</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                                <tr>
+                                    <td>2026-02-15 10:23:45</td>
+                                    <td><span class="admin-log-type success">音乐</span></td>
+                                    <td>下载《夜空中最亮的星》</td>
+                                    <td><span class="admin-status active">完成</span></td>
+                                </tr>
+                                <tr>
+                                    <td>2026-02-15 09:15:22</td>
+                                    <td><span class="admin-log-type info">AI</span></td>
+                                    <td>AI 对话：帮我写一段代码</td>
+                                    <td><span class="admin-status active">完成</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="pageSystem" class="admin-page" style="display: none;">
+                    <div class="admin-stats">
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon green">💾</div>
+                            <div class="admin-stat-info">
+                                <h3 id="systemMemory">45%</h3>
+                                <p>内存使用</p>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon blue">🔲</div>
+                            <div class="admin-stat-info">
+                                <h3 id="systemCPU">32%</h3>
+                                <p>CPU 使用</p>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon purple">📦</div>
+                            <div class="admin-stat-info">
+                                <h3 id="systemStorage">2.4 GB</h3>
+                                <p>存储使用</p>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon orange">🟢</div>
+                            <div class="admin-stat-info">
+                                <h3 id="systemUptime">99.9%</h3>
+                                <p>运行时间</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3 class="admin-card-title">系统信息</h3>
+                        </div>
+                        <div style="padding: 24px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                                <div>
+                                    <p style="color: var(--text-muted); font-size: 14px;">版本号</p>
+                                    <p style="font-weight: 600;">v2.5.0</p>
+                                </div>
+                                <div>
+                                    <p style="color: var(--text-muted); font-size: 14px;">Python 版本</p>
+                                    <p style="font-weight: 600;">3.13.0</p>
+                                </div>
+                                <div>
+                                    <p style="color: var(--text-muted); font-size: 14px;">Flask 版本</p>
+                                    <p style="font-weight: 600;">3.0.0</p>
+                                </div>
+                                <div>
+                                    <p style="color: var(--text-muted); font-size: 14px;">运行时长</p>
+                                    <p style="font-weight: 600;">5 天 12 小时</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="admin-modal" id="addUserModal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h3 class="admin-modal-title">添加用户</h3>
+                <button class="admin-modal-close" onclick="closeModal('addUserModal')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="admin-modal-body">
+                <div class="form-group">
+                    <label class="form-label">用户名</label>
+                    <input type="text" class="form-input" placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">邮箱</label>
+                    <input type="email" class="form-input" placeholder="请输入邮箱">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">密码</label>
+                    <input type="password" class="form-input" placeholder="请输入密码">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">角色</label>
+                    <select class="form-input">
+                        <option value="user">普通用户</option>
+                        <option value="admin">管理员</option>
+                    </select>
+                </div>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('addUserModal')">取消</button>
+                <button class="btn btn-primary" onclick="addUser()">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

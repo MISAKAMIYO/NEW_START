@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAILGUN - 多功能桌面应用</title>
+    <link rel="stylesheet" href="css/modern.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">RAILGUN</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="active">首页</a>
+                <a href="tools.html">在线工具</a>
+                <a href="about.html">关于</a>
+                <a href="contact.html">联系</a>
+            </div>
+            <div class="nav-actions">
+                <div id="connectionStatus" class="connection-status">
+                    <span class="status-dot"></span>
+                    <span>检查连接中...</span>
+                </div>
+                <a href="admin.html" class="btn btn-ghost btn-sm" id="adminLink" style="display: none;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M9 3v18"/>
+                        <path d="M3 9h6"/>
+                    </svg>
+                    管理后台
+                </a>
+                <a href="admin.html" class="btn btn-outline btn-sm" id="loginBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                        <polyline points="10 17 15 12 10 7"/>
+                        <line x1="15" y1="12" x2="3" y2="12"/>
+                    </svg>
+                    登录
+                </a>
+                <div class="user-menu" id="userMenu" style="display: none;">
+                    <div class="user-menu-trigger" onclick="toggleUserDropdown()">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <span id="userName">用户</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="admin.html" class="dropdown-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <path d="M9 3v18"/>
+                            </svg>
+                            我的控制台
+                        </a>
+                        <a href="#" class="dropdown-item" onclick="UserMenu.logout(); return false;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16 17 21 12 16 7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            退出登录
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <button class="mobile-menu-btn" aria-label="菜单">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content slide-up">
+                <h1 class="hero-title">
+                    释放生产力<br>
+                    <span>从 RAILGUN 开始</span>
+                </h1>
+                <p class="hero-description">
+                    一款集音乐下载、AI 对话、宏控制等功能于一体的多功能桌面应用。
+                    简洁高效，为您的工作流加速。
+                </p>
+                <div class="hero-actions">
+                    <a href="#download" class="btn btn-primary btn-lg">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        免费下载
+                    </a>
+                    <a href="tools.html" class="btn btn-secondary btn-lg">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polygon points="10 8 16 12 10 16 10 8"/>
+                        </svg>
+                        在线工具
+                    </a>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">10+</div>
+                        <div class="hero-stat-label">实用功能</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">50k+</div>
+                        <div class="hero-stat-label">活跃用户</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-value">99.9%</div>
+                        <div class="hero-stat-label">满意度</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">功能特性</h2>
+                <p class="section-subtitle">精心打磨每一个功能，只为给您最好的使用体验</p>
+            </div>
+            <div class="features-grid">
+                <div class="card fade-in">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">🎵</div>
+                    <h3 class="card-title">音乐下载</h3>
+                    <p class="card-description">支持网易云、QQ 音乐、酷狗等多个平台，一键下载高品质音乐。</p>
+                    <a href="tools.html?tool=music" class="btn btn-ghost btn-sm">立即体验 →</a>
+                </div>
+                <div class="card fade-in">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">🤖</div>
+                    <h3 class="card-title">AI 智能对话</h3>
+                    <p class="card-description">集成多种 AI 模型，智能问答、写作辅助、代码编写样样精通。</p>
+                    <a href="tools.html?tool=ai" class="btn btn-ghost btn-sm">立即体验 →</a>
+                </div>
+                <div class="card fade-in">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #14b8a6, #06b6d4);">📥</div>
+                    <h3 class="card-title">视频下载</h3>
+                    <p class="card-description">支持 Bilibili、抖音等平台，高效下载您喜爱的视频内容。</p>
+                    <a href="tools.html?tool=download" class="btn btn-ghost btn-sm">立即体验 →</a>
+                </div>
+                <div class="card fade-in">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">🎮</div>
+                    <h3 class="card-title">宏控制工具</h3>
+                    <p class="card-description">录制和执行宏命令，自动化重复操作，解放您的双手。</p>
+                    <a href="tools.html?tool=macro" class="btn btn-ghost btn-sm">立即体验 →</a>
+                </div>
+                <div class="card fade-in">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">🎲</div>
+                    <h3 class="card-title">随机数工具</h3>
+                    <p class="card-description">生成随机数、密码、UUID、颜色值，满足各种随机需求。</p>
+                    <a href="tools.html?tool=random" class="btn btn-ghost btn-sm">立即体验 →</a>
+                </div>
+                <div class="card fade-in">
+                    <div class="card-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">✏️</div>
+                    <h3 class="card-title">屏幕画笔</h3>
+                    <p class="card-description">在屏幕上自由标注、截图标记，让演示沟通更高效。</p>
+                    <a href="tools.html?tool=pen" class="btn btn-ghost btn-sm">立即体验 →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="download" style="background: linear-gradient(180deg, rgba(99, 102, 241, 0.05) 0%, transparent 100%);">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">立即下载</h2>
+                <p class="section-subtitle">支持 Windows 10/11 系统，免费使用</p>
+            </div>
+            <div style="text-align: center;">
+                <a href="#" class="btn btn-primary btn-lg" style="margin-bottom: 20px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    下载 RAILGUN v2.5.0
+                </a>
+                <p style="color: var(--text-secondary); font-size: 14px;">
+                    最新更新：2026年2月15日 · Windows 64位 · 约 120MB
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <span>⚡</span>
+                        <span>RAILGUN</span>
+                    </div>
+                    <p class="footer-description">
+                        一款致力于提升工作效率的多功能桌面应用。
+                        开源免费，持续更新中。
+                    </p>
+                </div>
+                <div>
+                    <h4 class="footer-title">产品</h4>
+                    <ul class="footer-links">
+                        <li><a href="#features">功能特性</a></li>
+                        <li><a href="#download">下载中心</a></li>
+                        <li><a href="tools.html">在线工具</a></li>
+                        <li><a href="#changelog">更新日志</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">资源</h4>
+                    <ul class="footer-links">
+                        <li><a href="about.html">关于我们</a></li>
+                        <li><a href="contact.html">联系我们</a></li>
+                        <li><a href="#privacy">隐私政策</a></li>
+                        <li><a href="#terms">使用条款</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">社区</h4>
+                    <ul class="footer-links">
+                        <li><a href="#github">GitHub</a></li>
+                        <li><a href="#discord">Discord</a></li>
+                        <li><a href="#qq">QQ 群</a></li>
+                        <li><a href="#feedback">反馈建议</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 RAILGUN Team. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="#" class="social-link" aria-label="GitHub">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

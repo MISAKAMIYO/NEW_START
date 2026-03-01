@@ -1,0 +1,73 @@
+{
+  "repos": [
+    {
+      "name": "RAILGUN",
+      "description": "RAILGUN - 多功能工具集合软件",
+      "created": "2026-02-17T00:00:00",
+      "updated": "2026-02-19T00:00:00",
+      "files": [
+        "AI_Chat/__init__.py",
+        "AI_Chat/ai_chat.py",
+        "AI_Chat/ai_model.py",
+        "AI_Chat/main_ai_chat.py",
+        "Bilibili_Music_Download/__init__.py",
+        "Bilibili_Music_Download/main_bilibili_download.py",
+        "GAMES/SNAKES/main_snakes.py",
+        "Just Start.bat",
+        "Macro/macro.py",
+        "Macro/start.bat",
+        "Music_Download/crawler.py",
+        "Music_Download/main_music_download.py",
+        "Music_Download/modern_ui_components.py",
+        "Music_Player/audio_player.py",
+        "Music_Player/external_lyrics.py",
+        "Music_Player/lyrics_widget.py",
+        "Music_Player/main_music_player.py",
+        "Music_Player/progress_manager.py",
+        "Music_Player/settings.json",
+        "RAILGUN.spec",
+        "Tools/Convert_Tools/main_convert.py",
+        "Tools/RandomName/main_randomname.py",
+        "Tools/Screen_Pen/main_screen_pen.py",
+        "WEBSITE/about.html",
+        "WEBSITE/admin.html",
+        "WEBSITE/api_routes.py",
+        "WEBSITE/backend.py",
+        "WEBSITE/contact.html",
+        "WEBSITE/css/admin.css",
+        "WEBSITE/css/modern.css",
+        "WEBSITE/css/style.css",
+        "WEBSITE/forum/css/forum.css",
+        "WEBSITE/forum/data/posts.json",
+        "WEBSITE/forum/forum_backend.py",
+        "WEBSITE/forum/index.html",
+        "WEBSITE/forum/js/auth.js",
+        "WEBSITE/forum/js/forum.js",
+        "WEBSITE/forum/js/profile.js",
+        "WEBSITE/forum/login.html",
+        "WEBSITE/forum/new.html",
+        "WEBSITE/forum/post.html",
+        "WEBSITE/forum/profile.html",
+        "WEBSITE/index.html",
+        "WEBSITE/js/admin.js",
+        "WEBSITE/js/app.js",
+        "WEBSITE/tools.html",
+        "build.py",
+        "main.py",
+        "main_window.py",
+        "make_installer.py",
+        "modern_window.py",
+        "requirements.txt",
+        "settings_manager.py",
+        "test_ai_modules.py"
+      ],
+      "commits": 1
+    }
+  ],
+  "users": {
+    "admin": {
+      "password": "admin",
+      "name": "Administrator"
+    }
+  }
+}

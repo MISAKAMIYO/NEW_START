@@ -1,0 +1,2843 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线工具 - RAILGUN</title>
+    <link rel="stylesheet" href="css/modern.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+        .page-loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        .loader-content {
+            text-align: center;
+        }
+        .loader-logo {
+            font-size: 64px;
+            margin-bottom: 20px;
+            animation: float 2s ease-in-out infinite;
+        }
+        .loader-bar {
+            width: 200px;
+            height: 4px;
+            background: var(--bg-elevated);
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 20px auto 0;
+        }
+        .loader-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            border-radius: 2px;
+            animation: loadProgress 1.5s ease-in-out infinite;
+        }
+        @keyframes loadProgress {
+            0% { width: 0%; margin-left: 0; }
+            50% { width: 70%; margin-left: 15%; }
+            100% { width: 0%; margin-left: 100%; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px var(--primary), 0 0 10px var(--primary); }
+            50% { box-shadow: 0 0 20px var(--primary), 0 0 40px var(--primary), 0 0 60px var(--primary); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1) rotate(180deg); }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes tada {
+            0%, 100% { transform: scale(1); }
+            10%, 30% { transform: scale(0.9) rotate(-3deg); }
+            20%, 40% { transform: scale(0.9) rotate(3deg); }
+            50% { transform: scale(1.05) rotate(-1deg); }
+        }
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes rainbow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes floatBubble {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.15); }
+            50% { transform: scale(1); }
+            75% { transform: scale(1.1); }
+        }
+        .animate-slide-up {
+            animation: slideUpFade 0.6s ease-out forwards;
+            opacity: 0;
+        }
+        .animate-fade-in {
+            animation: fadeInScale 0.4s ease-out forwards;
+            opacity: 0;
+        }
+        .animate-bounce {
+            animation: bounce 2s ease-in-out infinite;
+        }
+        .animate-tada {
+            animation: tada 1s ease-out;
+        }
+        .animate-pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        .delay-5 { animation-delay: 0.5s; }
+        .delay-6 { animation-delay: 0.6s; }
+        .tool-card {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s ease;
+        }
+        .tool-card:hover::before {
+            left: 100%;
+        }
+        .tool-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3), 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+        .tool-card-icon {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tool-card:hover .tool-card-icon {
+            transform: scale(1.1) rotate(5deg);
+            animation: pulse 1s ease-in-out infinite;
+        }
+        .tool-card-title {
+            transition: color 0.3s ease;
+        }
+        .tool-card:hover .tool-card-title {
+            color: var(--primary-light);
+        }
+        .btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s ease, height 0.4s ease;
+        }
+        .btn:active::after {
+            width: 300px;
+            height: 300px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            background: var(--bg-elevated);
+        }
+        .btn-ghost:hover {
+            background: var(--bg-elevated);
+        }
+        .tab {
+            position: relative;
+            overflow: hidden;
+        }
+        .tab::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease;
+        }
+        .tab:hover::before {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+        .tab.active::before {
+            transform: scaleX(1);
+        }
+        .nav-links a {
+            position: relative;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+        .page-header {
+            position: relative;
+            overflow: hidden;
+        }
+        .page-header::before {
+            content: '✨';
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            font-size: 24px;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+        .page-header::after {
+            content: '⭐';
+            position: absolute;
+            top: 30%;
+            right: 15%;
+            font-size: 20px;
+            animation: sparkle 3s ease-in-out infinite 1s;
+        }
+        .sparkle {
+            position: absolute;
+            pointer-events: none;
+            animation: sparkle 1.5s ease-in-out infinite;
+        }
+        .floating-element {
+            position: absolute;
+            pointer-events: none;
+            animation: floatBubble 8s linear infinite;
+            opacity: 0.3;
+        }
+        .cursor-trail {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99999;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .cursor-trail.active {
+            opacity: 0.6;
+        }
+        .cursor-trail::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--secondary);
+            border-radius: 50%;
+            animation: pulse 1s ease-in-out infinite;
+        }
+        .card {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+            opacity: 0;
+        }
+        .card:hover::before {
+            opacity: 1;
+            transform: rotate(45deg) translate(10%, 10%);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+        .form-input {
+            transition: all 0.3s ease;
+        }
+        .form-input:focus {
+            transform: scale(1.02);
+        }
+        .form-input::placeholder {
+            transition: all 0.3s ease;
+        }
+        .form-input:focus::placeholder {
+            opacity: 0.5;
+            transform: translateX(10px);
+        }
+        .tool-close {
+            position: relative;
+        }
+        .tool-close:hover {
+            animation: tada 0.5s ease;
+        }
+        .tool-favorite {
+            transition: all 0.3s ease;
+        }
+        .tool-favorite:hover {
+            transform: scale(1.3) rotate(15deg);
+        }
+        .tool-favorite.active {
+            animation: heartBeat 0.5s ease;
+        }
+        .recent-tool-item {
+            position: relative;
+            overflow: hidden;
+        }
+        .recent-tool-item::before {
+            content: '→';
+            position: absolute;
+            left: -20px;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .recent-tool-item:hover::before {
+            left: 8px;
+            opacity: 1;
+        }
+        .recent-tool-item:hover {
+            padding-left: 24px;
+        }
+        .stat-item {
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, transparent 50%, rgba(99, 102, 241, 0.1) 50%);
+        }
+        .stat-item:hover {
+            transform: translateY(-3px);
+        }
+        .stat-value {
+            transition: all 0.3s ease;
+        }
+        .stat-item:hover .stat-value {
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: rainbow 3s linear infinite;
+        }
+        .toast {
+            backdrop-filter: blur(10px);
+        }
+        .loading-spinner {
+            position: relative;
+        }
+        .loading-spinner::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border: 2px solid transparent;
+            border-top-color: var(--secondary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite reverse;
+        }
+        .music-cover {
+            animation: pulse 4s ease-in-out infinite;
+        }
+        .music-progress {
+            position: relative;
+        }
+        .music-progress::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: translateY(-50%);
+        }
+        .tool-panel {
+            animation: fadeInScale 0.4s ease-out;
+        }
+        .tool-panel.active {
+            display: block;
+        }
+        .shortcut-hint {
+            position: relative;
+        }
+        .tool-card:hover .shortcut-hint {
+            animation: bounce 0.5s ease;
+        }
+        .theme-toggle:hover {
+            animation: tada 0.5s ease;
+        }
+        .connection-status {
+            position: relative;
+        }
+        .status-dot {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .user-avatar {
+            animation: pulse 3s ease-in-out infinite;
+        }
+        .logo-icon {
+            display: inline-block;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        .logo:hover .logo-icon {
+            animation: tada 0.5s ease;
+        }
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .footer-logo span:first-child {
+            font-size: 32px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        .quick-actions .btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .quick-actions .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        .quick-actions .btn:hover::before {
+            left: 100%;
+        }
+        .strength-bar {
+            position: relative;
+            overflow: hidden;
+        }
+        .strength-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        #uploadArea {
+            position: relative;
+        }
+        #uploadArea::before {
+            content: '📎';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            opacity: 0.3;
+            animation: float 3s ease-in-out infinite;
+        }
+        .image-tabs .tab {
+            position: relative;
+        }
+        .image-tabs .tab.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+        #colorResult {
+            position: relative;
+            overflow: hidden;
+        }
+        #colorResult::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            animation: float 10s linear infinite;
+        }
+        #bytesResult {
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .tool-panel { display: none; }
+        .tool-panel.active { display: block; }
+        .tool-close { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 24px; color: var(--text-muted); transition: var(--transition); }
+        .tool-close:hover { color: var(--text-primary); }
+        .section { position: relative; }
+        .shortcut-hint { font-size: 11px; color: var(--text-muted); margin-left: 8px; opacity: 0.7; }
+        .strength-bar { height: 8px; border-radius: 4px; background: var(--bg-elevated); margin-top: 8px; overflow: hidden; }
+        .strength-fill { height: 100%; transition: width 0.3s ease; border-radius: 4px; }
+        .unit-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .currency-row { display: flex; gap: 12px; align-items: center; }
+        .json-result { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
+        .color-preview { width: 100%; height: 60px; border-radius: var(--radius); margin-bottom: 12px; display: flex; align-items: center; justify-content: center; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .quick-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .char-type-badge { display: inline-block; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 11px; margin-right: 4px; }
+        .char-type-upper { background: rgba(99, 102, 241, 0.2); color: var(--primary-light); }
+        .char-type-lower { background: rgba(236, 72, 153, 0.2); color: var(--secondary); }
+        .char-type-number { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .char-type-symbol { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .image-tabs .tab { flex: 1; text-align: center; }
+        .image-tabs .tab.active { background: var(--primary); color: white; }
+        #uploadArea:hover { border-color: var(--primary); background: var(--bg-dark); }
+        input[type="range"] { -webkit-appearance: none; height: 8px; background: var(--bg-elevated); border-radius: 4px; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--primary); border-radius: 50%; cursor: pointer; }
+        .tool-favorite { position: absolute; top: 12px; right: 12px; cursor: pointer; opacity: 0.5; transition: var(--transition); }
+        .tool-favorite:hover, .tool-favorite.active { opacity: 1; }
+        .tool-card { position: relative; }
+        .recent-tools { display: flex; gap: 12px; overflow-x: auto; padding: 4px; margin-bottom: 24px; }
+        .recent-tool-item { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: var(--transition); }
+        .recent-tool-item:hover { border-color: var(--primary); background: var(--bg-dark); }
+        .recent-tool-item .icon { font-size: 20px; }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--bg-elevated); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.error { border-left: 3px solid var(--error); }
+        .toast.info { border-left: 3px solid var(--primary); }
+        .usage-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .stat-item { text-align: center; padding: 16px; background: var(--bg-dark); border-radius: var(--radius); }
+        .stat-value { font-size: 24px; font-weight: 700; color: var(--primary); }
+        .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .search-box { position: relative; margin-bottom: 24px; }
+        .search-box input { width: 100%; padding: 12px 16px 12px 44px; font-size: 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); color: var(--text-primary); transition: var(--transition); }
+        .search-box input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+        .search-box .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        
+        @media (max-width: 768px) {
+            .page-header { padding: 40px 0 24px; }
+            .page-title { font-size: 28px; }
+            .page-subtitle { font-size: 14px; }
+            .usage-stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .stat-item { padding: 12px 8px; }
+            .stat-value { font-size: 18px; }
+            .stat-label { font-size: 10px; }
+            .recent-tools { gap: 8px; }
+            .recent-tool-item { padding: 6px 12px; font-size: 13px; }
+            .recent-tool-item .icon { font-size: 16px; }
+            .tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+            .tab { padding: 8px 12px; font-size: 13px; white-space: nowrap; }
+            .tools-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .tool-card { padding: 16px; }
+            .tool-card-icon { width: 40px; height: 40px; font-size: 20px; }
+            .tool-card-title { font-size: 14px; }
+            .tool-card-description { font-size: 11px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+            .shortcut-hint { display: none; }
+            .tool-favorite { top: 8px; right: 8px; font-size: 14px; }
+            .tool-close { top: 12px; right: 12px; font-size: 28px; }
+            .section { padding: 24px 0; }
+            .card { padding: 16px; }
+            .section-title { font-size: 22px; }
+            .section-subtitle { font-size: 13px; }
+            .toast { left: 16px; right: 16px; bottom: 16px; font-size: 14px; }
+            .form-input { padding: 10px 12px; font-size: 14px; }
+            .form-textarea { min-height: 150px; }
+            .btn { padding: 10px 16px; font-size: 14px; }
+            .btn-sm { padding: 6px 12px; font-size: 12px; }
+            .btn-icon { width: 36px; height: 36px; }
+            .music-progress { margin-bottom: 12px; }
+            .music-cover { width: 60px !important; height: 60px !important; font-size: 30px !important; }
+            #currentTrack { font-size: 16px !important; }
+            #currentArtist { font-size: 12px !important; }
+            .tool-panel .container { padding: 0 12px; }
+            .image-tabs .tab { padding: 8px 10px; font-size: 12px; }
+            #resizeTab, #compressTab, #convertTab, #watermarkTab { padding: 12px; }
+        }
+        
+        @media (max-width: 480px) {
+            .tools-grid { grid-template-columns: 1fr; }
+            .usage-stats { grid-template-columns: 1fr 1fr 1fr; }
+            .page-title { font-size: 24px; }
+            .section-title { font-size: 20px; }
+            .container { padding: 0 12px; }
+            #toolPanels { margin-top: 16px; }
+        }
+        
+        @media (hover: none) {
+            .tool-card:hover { transform: none; box-shadow: var(--shadow); }
+            .btn:hover { transform: none; }
+            .tab:hover { background: var(--bg-card); }
+        }
+        
+        @keyframes clickRipple {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(4); opacity: 0; }
+        }
+        .ripple-effect {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(99, 102, 241, 0.3);
+            animation: clickRipple 0.6s ease-out forwards;
+            pointer-events: none;
+        }
+        @keyframes emojiPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(1) translateY(-30px); opacity: 0; }
+        }
+        .emoji-pop {
+            position: absolute;
+            font-size: 24px;
+            pointer-events: none;
+            animation: emojiPop 1s ease-out forwards;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .gradient-text {
+            background: linear-gradient(-45deg, #6366f1, #8b5cf6, #ec4899, #f43f5e);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 5s ease infinite;
+        }
+        @keyframes neonGlow {
+            0%, 100% { text-shadow: 0 0 5px currentColor, 0 0 10px currentColor; }
+            50% { text-shadow: 0 0 20px currentColor, 0 0 40px currentColor, 0 0 60px currentColor; }
+        }
+        .neon-effect {
+            animation: neonGlow 2s ease-in-out infinite;
+        }
+        @keyframes rubberBand {
+            0% { transform: scale(1); }
+            30% { transform: scaleX(1.25) scaleY(0.75); }
+            40% { transform: scaleX(0.75) scaleY(1.25); }
+            50% { transform: scaleX(1.15) scaleY(0.85); }
+            65% { transform: scaleX(0.95) scaleY(1.05); }
+            75% { transform: scaleX(1.05) scaleY(0.95); }
+            100% { transform: scale(1); }
+        }
+        .animate-rubber-band {
+            animation: rubberBand 0.8s ease;
+        }
+        @keyframes wobble {
+            0%, 100% { transform: translateX(0); }
+            15% { transform: translateX(-10px) rotate(-5deg); }
+            30% { transform: translateX(8px) rotate(3deg); }
+            45% { transform: translateX(-8px) rotate(-3deg); }
+            60% { transform: translateX(5px) rotate(2deg); }
+            75% { transform: translateX(-3px) rotate(-1deg); }
+        }
+        .animate-wobble {
+            animation: wobble 1s ease-in-out;
+        }
+        @keyframes jelly {
+            0%, 100% { transform: scale3d(1, 1, 1); }
+            25% { transform: scale3d(1.25, 0.75, 1); }
+            50% { transform: scale3d(0.75, 1.25, 1); }
+            75% { transform: scale3d(1.15, 0.85, 1); }
+        }
+        .animate-jelly {
+            animation: jelly 0.8s ease-in-out;
+        }
+        @keyframes swing {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+        }
+        .animate-swing {
+            transform-origin: top center;
+            animation: swing 1s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .animate-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes rollIn {
+            0% { opacity: 0; transform: translateX(-100%) rotate(-120deg); }
+            100% { opacity: 1; transform: translateX(0) rotate(0); }
+        }
+        .animate-roll-in {
+            animation: rollIn 0.6s ease-out;
+        }
+        @keyframes flipInX {
+            0% { transform: perspective(400px) rotateX(90deg); opacity: 0; }
+            40% { transform: perspective(400px) rotateX(-10deg); }
+            70% { transform: perspective(400px) rotateX(10deg); }
+            100% { transform: perspective(400px) rotateX(0); opacity: 1; }
+        }
+        .animate-flip-in-x {
+            animation: flipInX 0.8s ease-out;
+        }
+        @keyframes zoomInUp {
+            0% { opacity: 0; transform: scale(0.1) translateY(100px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-zoom-in-up {
+            animation: zoomInUp 0.6s ease-out;
+        }
+        @keyframes slideInRight {
+            0% { opacity: 0; transform: translateX(50px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+        .animate-slide-in-right {
+            animation: slideInRight 0.5s ease-out;
+        }
+        @keyframes revealText {
+            0% { clip-path: inset(0 100% 0 0); }
+            100% { clip-path: inset(0 0 0 0); }
+        }
+        .reveal-text {
+            animation: revealText 0.8s ease-out forwards;
+        }
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+        .glitch-effect:hover {
+            animation: glitch 0.3s ease-in-out;
+        }
+        @keyframes morphing {
+            0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+            50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+        }
+        .morph-shape {
+            animation: morphing 4s ease-in-out infinite;
+        }
+        @keyframes spotlight {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(200%) rotate(45deg); }
+        }
+        .spotlight-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: spotlight 2s ease-in-out infinite;
+        }
+        .card-hover-3d {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+        }
+        .card-hover-3d:hover {
+            transform: perspective(1000px) rotateY(10deg) rotateX(5deg);
+            box-shadow: 20px 20px 40px rgba(0,0,0,0.3);
+        }
+        @keyframes featherFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-10px) rotate(2deg); }
+            50% { transform: translateY(-5px) rotate(-1deg); }
+            75% { transform: translateY(-8px) rotate(1deg); }
+        }
+        .feather-float {
+            animation: featherFloat 3s ease-in-out infinite;
+        }
+        .rainbow-border {
+            position: relative;
+        }
+        .rainbow-border::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
+            background-size: 400%;
+            border-radius: inherit;
+            z-index: -1;
+            animation: gradientShift 5s linear infinite;
+            filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .rainbow-border:hover::before {
+            opacity: 1;
+        }
+        @keyframes breathing {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+        .breathing {
+            animation: breathing 2s ease-in-out infinite;
+        }
+        @keyframes skeleton {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+        .skeleton-loading {
+            background: linear-gradient(90deg, var(--bg-dark) 0px, var(--bg-elevated) 40px, var(--bg-dark) 80px);
+            background-size: 200px 100%;
+            animation: skeleton 1.5s infinite;
+        }
+        @keyframes orbit {
+            0% { transform: rotate(0deg) translateX(50px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
+        }
+        .orbit-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+        .orbit-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .orbit-item {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            animation: orbit 3s linear infinite;
+        }
+        @keyframes pulseBorder {
+            0%, 100% { border-color: var(--primary); }
+            50% { border-color: var(--secondary); }
+        }
+        .pulse-border {
+            animation: pulseBorder 2s ease-in-out infinite;
+        }
+        @keyframes textStrokeFill {
+            0% { stroke-dashoffset: 100%; fill: transparent; }
+            50% { stroke-dashoffset: 0%; fill: transparent; }
+            100% { stroke-dashoffset: 0%; fill: white; }
+        }
+        .stroke-text {
+            -webkit-text-stroke: 1px var(--primary);
+            color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-content">
+            <div class="loader-logo">⚡</div>
+            <div style="font-size: 18px; margin-bottom: 10px; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">加载中...</div>
+            <div class="loader-bar">
+                <div class="loader-progress"></div>
+            </div>
+        </div>
+    </div>
+    <div class="cursor-trail" id="cursorTrail"></div>
+    <div class="floating-elements" id="floatingElements"></div>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">RAILGUN</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html">首页</a>
+                <a href="tools.html" class="active">在线工具</a>
+                <a href="about.html">关于</a>
+                <a href="contact.html">联系</a>
+            </div>
+            <div class="nav-actions">
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="切换主题 (Ctrl+D)">
+                    <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot"></span>
+                    <span>检查连接中...</span>
+                </div>
+                <a href="admin.html" class="btn btn-ghost btn-sm" id="adminLink" style="display: none;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/>
+                        <path d="M9 3v18"/>
+                    </svg>
+                    管理后台
+                </a>
+                <a href="admin.html" class="btn btn-outline btn-sm" id="loginBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                        <polyline points="10 17 15 12 10 7"/>
+                        <line x1="15" y1="12" x2="3" y2="12"/>
+                    </svg>
+                    登录
+                </a>
+                <div class="user-menu" id="userMenu" style="display: none;">
+                    <div class="user-menu-trigger" onclick="toggleUserDropdown()">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <span id="userName">用户</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </div>
+                    <div class="user-dropdown" id="userDropdown">
+                        <a href="admin.html" class="dropdown-item">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <path d="M9 3v18"/>
+                            </svg>
+                            我的控制台
+                        </a>
+                        <a href="#" class="dropdown-item" onclick="UserMenu.logout(); return false;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                <polyline points="16 17 21 12 16 7"/>
+                                <line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            退出登录
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <button class="mobile-menu-btn" aria-label="菜单">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="page-header">
+        <div class="container">
+            <h1 class="page-title">在线工具</h1>
+            <p class="page-subtitle">无需安装软件，浏览器中直接使用全部功能</p>
+        </div>
+    </div>
+
+    <section class="section">
+        <div class="container">
+            <div class="search-box">
+                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="toolSearch" placeholder="搜索工具..." oninput="searchTools(this.value)">
+            </div>
+
+            <div class="usage-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalUses">0</div>
+                    <div class="stat-label">使用次数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="toolsCount">19</div>
+                    <div class="stat-label">可用工具</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="favCount">0</div>
+                    <div class="stat-label">我的收藏</div>
+                </div>
+            </div>
+
+            <div id="recentToolsSection" style="margin-bottom: 24px;">
+                <h3 style="font-size: 16px; margin-bottom: 12px; color: var(--text-secondary);">最近使用</h3>
+                <div class="recent-tools" id="recentToolsList">
+                    <p style="color: var(--text-muted); font-size: 14px;">暂无最近使用的工具</p>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="all" onclick="filterTools('all')">全部工具</button>
+                <button class="tab" data-tab="music" onclick="filterTools('music')">音乐相关</button>
+                <button class="tab" data-tab="ai" onclick="filterTools('ai')">AI 智能</button>
+                <button class="tab" data-tab="download" onclick="filterTools('download')">下载工具</button>
+                <button class="tab" data-tab="utility" onclick="filterTools('utility')">实用工具</button>
+            </div>
+
+            <div class="tools-grid" id="toolsGrid">
+                <div class="tool-card" data-category="music" onclick="showTool('musicPlayer')">
+                    <span class="tool-favorite" onclick="toggleFavorite('musicPlayer', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">🎵</div>
+                    <h3 class="tool-card-title">音乐播放器</h3>
+                    <p class="tool-card-description">在线播放音乐，支持播放列表管理、进度调节、音量控制。</p>
+                    <span class="shortcut-hint">⌨️ Ctrl+1</span>
+                </div>
+
+                <div class="tool-card" data-category="ai" onclick="showTool('aiChat')">
+                    <span class="tool-favorite" onclick="toggleFavorite('aiChat', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">🤖</div>
+                    <h3 class="tool-card-title">AI 对话</h3>
+                    <p class="tool-card-description">与 AI 助手进行智能对话，获得即时问答和写作帮助。</p>
+                    <span class="shortcut-hint">⌨️ Ctrl+2</span>
+                </div>
+
+                <div class="tool-card" data-category="download" onclick="showTool('videoDownload')">
+                    <span class="tool-favorite" onclick="toggleFavorite('videoDownload', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #14b8a6, #06b6d4);">📺</div>
+                    <h3 class="tool-card-title">视频下载</h3>
+                    <p class="tool-card-description">下载 Bilibili、抖音等平台的视频，支持多种画质选择。</p>
+                    <span class="shortcut-hint">⌨️ Ctrl+3</span>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('randomGen')">
+                    <span class="tool-favorite" onclick="toggleFavorite('randomGen', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">🎲</div>
+                    <h3 class="tool-card-title">随机数生成</h3>
+                    <p class="tool-card-description">生成随机数、密码、UUID、颜色值，支持多种参数设置。</p>
+                    <span class="shortcut-hint">⌨️ Ctrl+4</span>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('textTools')">
+                    <span class="tool-favorite" onclick="toggleFavorite('textTools', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">🔄</div>
+                    <h3 class="tool-card-title">文本转换</h3>
+                    <p class="tool-card-description">文本格式化、编码转换、大小写转换等文本处理工具。</p>
+                    <span class="shortcut-hint">⌨️ Ctrl+5</span>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('calculator')">
+                    <span class="tool-favorite" onclick="toggleFavorite('calculator', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #8b5cf6, #6366f1);">🧮</div>
+                    <h3 class="tool-card-title">计算器</h3>
+                    <p class="tool-card-description">支持基本数学运算、百分比、括号等计算功能。</p>
+                    <span class="shortcut-hint">⌨️ Ctrl+6</span>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('qrcode')">
+                    <span class="tool-favorite" onclick="toggleFavorite('qrcode', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">🔲</div>
+                    <h3 class="tool-card-title">二维码生成</h3>
+                    <p class="tool-card-description">将文本、链接转换为二维码图片，支持自定义大小。</p>
+                    <span class="shortcut-hint">⌨️ Ctrl+7</span>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('timestamp')">
+                    <span class="tool-favorite" onclick="toggleFavorite('timestamp', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #06b6d4, #14b8a6);">🕐</div>
+                    <h3 class="tool-card-title">时间戳转换</h3>
+                    <p class="tool-card-description">时间戳与日期时间格式相互转换，支持多种格式。</p>
+                    <span class="shortcut-hint">⌨️ Ctrl+8</span>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('passwordChecker')">
+                    <span class="tool-favorite" onclick="toggleFavorite('passwordChecker', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">🔐</div>
+                    <h3 class="tool-card-title">密码强度检测</h3>
+                    <p class="tool-card-description">检测密码强度，提供改进建议，保护账户安全。</p>
+                    <span class="shortcut-hint">⌨️ Ctrl+9</span>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('jsonFormatter')">
+                    <span class="tool-favorite" onclick="toggleFavorite('jsonFormatter', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #14b8a6, #10b981);">📋</div>
+                    <h3 class="tool-card-title">JSON 格式化</h3>
+                    <p class="tool-card-description">JSON 格式美化、压缩、语法检查和类型检测。</p>
+                    <span class="shortcut-hint">⌨️ Ctrl+0</span>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('unitConverter')">
+                    <span class="tool-favorite" onclick="toggleFavorite('unitConverter', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #6366f1, #3b82f6);">📏</div>
+                    <h3 class="tool-card-title">单位换算</h3>
+                    <p class="tool-card-description">长度、重量、温度、像素等常用单位换算工具。</p>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('timezoneConverter')">
+                    <span class="tool-favorite" onclick="toggleFavorite('timezoneConverter', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #f43f5e, #ec4899);">🌍</div>
+                    <h3 class="tool-card-title">时区转换</h3>
+                    <p class="tool-card-description">全球主要城市时区查询和转换，方便跨国沟通。</p>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('currencyConverter')">
+                    <span class="tool-favorite" onclick="toggleFavorite('currencyConverter', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #10b981, #06b6d4);">💱</div>
+                    <h3 class="tool-card-title">货币换算</h3>
+                    <p class="tool-card-description">实时汇率查询和货币换算，支持多种主流货币。</p>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('base64Tool')">
+                    <span class="tool-favorite" onclick="toggleFavorite('base64Tool', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #06b6d4, #3b82f6);">🔣</div>
+                    <h3 class="tool-card-title">Base64 编解码</h3>
+                    <p class="tool-card-description">Base64 编码和解码工具，支持文本和 URL 安全编码。</p>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('imageTool')">
+                    <span class="tool-favorite" onclick="toggleFavorite('imageTool', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">🖼️</div>
+                    <h3 class="tool-card-title">图片处理</h3>
+                    <p class="tool-card-description">图片压缩、格式转换、尺寸调整、水印添加等图片处理功能。</p>
+                    <span class="shortcut-hint">⌨️ Ctrl+A</span>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('colorPicker')">
+                    <span class="tool-favorite" onclick="toggleFavorite('colorPicker', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">🎨</div>
+                    <h3 class="tool-card-title">颜色选择器</h3>
+                    <p class="tool-card-description">生成随机颜色，HEX与RGB颜色格式相互转换。</p>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('bytesConverter')">
+                    <span class="tool-favorite" onclick="toggleFavorite('bytesConverter', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">💾</div>
+                    <h3 class="tool-card-title">字节转换器</h3>
+                    <p class="tool-card-description">字节单位换算，支持 Bytes、KB、MB、GB、TB 相互转换。</p>
+                </div>
+
+                <div class="tool-card" data-category="utility" onclick="showTool('idcardTool')">
+                    <span class="tool-favorite" onclick="toggleFavorite('idcardTool', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #14b8a6, #10b981);">🪪</div>
+                    <h3 class="tool-card-title">身份证查询</h3>
+                    <p class="tool-card-description">根据身份证号码查询地区、性别、年龄、生肖、星座等信息。</p>
+                </div>
+                <div class="tool-card" data-category="media" onclick="showTool('embedTool')">
+                    <span class="tool-favorite" onclick="toggleFavorite('embedTool', this)">☆</span>
+                    <div class="tool-card-icon" style="background: linear-gradient(135deg, #f472b6, #ec4899);">🖼️</div>
+                    <h3 class="tool-card-title">多媒体嵌入</h3>
+                    <p class="tool-card-description">生成图片/视频嵌入代码，支持Markdown和BBCode。</p>
+                    <span class="shortcut-hint">⌨️ Ctrl+E</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="toolPanels">
+        <section class="section tool-panel active" id="musicPlayer">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🎵 音乐播放器</h2>
+                    <p class="section-subtitle">同步本地播放器，在线控制播放</p>
+                </div>
+                <div class="card" style="max-width: 800px; margin: 0 auto;">
+                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px;">
+                        <div class="music-cover" style="width: 80px; height: 80px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 40px;">🎵</div>
+                        <div style="flex: 1;">
+                            <h3 id="currentTrack" style="font-size: 20px; margin-bottom: 4px;">未播放</h3>
+                            <p id="currentArtist" style="color: var(--text-secondary); font-size: 14px;">-</p>
+                        </div>
+                    </div>
+                    <div class="music-progress" style="margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+                            <span id="currentTime">0:00</span>
+                            <span id="totalTime">0:00</span>
+                        </div>
+                        <div style="width: 100%; height: 6px; background: var(--bg-elevated); border-radius: 3px; overflow: hidden;">
+                            <div id="musicProgressBar" style="width: 0%; height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.5s;"></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 24px;">
+                        <button class="btn btn-icon btn-ghost" onclick="musicPlayer.prev()">⏮</button>
+                        <button class="btn btn-primary" style="width: 56px; height: 56px; border-radius: 50%;" onclick="musicPlayer.toggle()" id="playPauseBtn">▶</button>
+                        <button class="btn btn-icon btn-ghost" onclick="musicPlayer.next()">⏭</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 14px;">🔊</span>
+                        <input type="range" class="volume-slider" min="0" max="100" value="80" style="flex: 1;" oninput="musicPlayer.setVolume(this.value)">
+                        <span id="volumeValue" style="font-size: 14px; min-width: 40px;">80%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="aiChat">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🤖 AI 智能对话</h2>
+                    <p class="section-subtitle">与 AI 助手进行实时对话交流</p>
+                </div>
+                <div class="card" style="max-width: 800px; margin: 0 auto;">
+                    <div id="chatMessages" style="height: 400px; overflow-y: auto; padding: 16px; background: var(--bg-dark); border-radius: 8px; margin-bottom: 16px;">
+                        <div class="chat-message assistant">👋 你好！我是 AI 助手，有什么可以帮助你的吗？</div>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <input type="text" id="aiInput" class="form-input" placeholder="输入你的问题..." style="flex: 1;" onkeypress="if(event.key==='Enter') sendAiMessage()">
+                        <button class="btn btn-primary" onclick="sendAiMessage()">发送</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="randomGen">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🎲 随机数生成器</h2>
+                    <p class="section-subtitle">生成各种随机数据</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
+                    <div class="card">
+                        <h3 style="font-size: 18px; margin-bottom: 16px;">🎲 随机整数</h3>
+                        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                            <input type="number" id="randMin" class="form-input" value="1" style="width: 100px;" placeholder="最小">
+                            <span style="align-self: center;">—</span>
+                            <input type="number" id="randMax" class="form-input" value="100" style="width: 100px;" placeholder="最大">
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" onclick="generateRandomNumber()">生成</button>
+                        <div id="randomResult" class="result-box" style="margin-top: 16px; padding: 12px; background: var(--bg-dark); border-radius: 8px; font-family: monospace; font-size: 18px; text-align: center;"></div>
+                    </div>
+                    <div class="card">
+                        <h3 style="font-size: 18px; margin-bottom: 16px;">🔐 随机密码</h3>
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px;">密码长度: <span id="passwordLengthValue">16</span></label>
+                            <input type="range" id="passwordLength" min="8" max="64" value="16" style="width: 100%;" oninput="document.getElementById('passwordLengthValue').textContent = this.value">
+                        </div>
+                        <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+                            <label class="char-type-badge char-type-upper"><input type="checkbox" id="useUppercase" checked> 大写</label>
+                            <label class="char-type-badge char-type-lower"><input type="checkbox" id="useLowercase" checked> 小写</label>
+                            <label class="char-type-badge char-type-number"><input type="checkbox" id="useNumbers" checked> 数字</label>
+                            <label class="char-type-badge char-type-symbol"><input type="checkbox" id="useSymbols" checked> 特殊</label>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" onclick="generatePassword()">生成密码</button>
+                        <div id="passwordResult" class="result-box" style="margin-top: 16px; padding: 12px; background: var(--bg-dark); border-radius: 8px; font-family: monospace; word-break: break-all;"></div>
+                    </div>
+                    <div class="card">
+                        <h3 style="font-size: 18px; margin-bottom: 16px;">🎨 随机颜色</h3>
+                        <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                            <button class="btn btn-secondary btn-sm" onclick="generateColor('hex')">HEX</button>
+                            <button class="btn btn-secondary btn-sm" onclick="generateColor('rgb')">RGB</button>
+                        </div>
+                        <div id="colorResult" style="padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 16px; background: var(--bg-dark);"></div>
+                    </div>
+                    <div class="card">
+                        <h3 style="font-size: 18px; margin-bottom: 16px;">🆔 UUID</h3>
+                        <button class="btn btn-primary" style="width: 100%; margin-bottom: 16px;" onclick="generateUUID()">生成 UUID</button>
+                        <div id="uuidResult" class="result-box" style="padding: 12px; background: var(--bg-dark); border-radius: 8px; font-family: monospace; font-size: 13px; word-break: break-all;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="textTools">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🔄 文本转换工具</h2>
+                    <p class="section-subtitle">各种文本格式转换和处理</p>
+                </div>
+                <div class="card" style="max-width: 900px; margin: 0 auto;">
+                    <div class="quick-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="convertText('uppercase')">大写</button>
+                        <button class="btn btn-secondary btn-sm" onclick="convertText('lowercase')">小写</button>
+                        <button class="btn btn-secondary btn-sm" onclick="convertText('titlecase')">首字母大写</button>
+                        <button class="btn btn-secondary btn-sm" onclick="convertText('reverse')">反转</button>
+                        <button class="btn btn-secondary btn-sm" onclick="convertText('strip')">去空格</button>
+                        <button class="btn btn-secondary btn-sm" onclick="convertText('base64_encode')">Base64</button>
+                        <button class="btn btn-secondary btn-sm" onclick="convertText('url_encode')">URL编码</button>
+                        <button class="btn btn-secondary btn-sm" onclick="convertText('md5')">MD5</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px;">输入文本</label>
+                            <textarea id="textInput" class="form-input form-textarea" style="height: 250px;" placeholder="在此输入文本..."></textarea>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px;">输出结果</label>
+                            <textarea id="textOutput" class="form-input form-textarea" style="height: 250px; background: var(--bg-dark);" readonly></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="calculator">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🧮 计算器</h2>
+                    <p class="section-subtitle">支持基本数学运算和函数计算</p>
+                </div>
+                <div class="card" style="max-width: 420px; margin: 0 auto;">
+                    <div style="background: var(--bg-dark); border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <input type="text" id="calcDisplay" class="form-input" style="text-align: right; font-size: 28px; font-family: 'JetBrains Mono', monospace; padding: 16px; background: transparent; border: none;" placeholder="0" readonly>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                        <button class="btn btn-secondary" onclick="calcInput('C')">AC</button>
+                        <button class="btn btn-secondary" onclick="calcInput('(')">(</button>
+                        <button class="btn btn-secondary" onclick="calcInput(')')">)</button>
+                        <button class="btn btn-secondary" onclick="calcInput('/')">÷</button>
+                        <button class="btn btn-ghost" onclick="calcInput('7')">7</button>
+                        <button class="btn btn-ghost" onclick="calcInput('8')">8</button>
+                        <button class="btn btn-ghost" onclick="calcInput('9')">9</button>
+                        <button class="btn btn-secondary" onclick="calcInput('*')">×</button>
+                        <button class="btn btn-ghost" onclick="calcInput('4')">4</button>
+                        <button class="btn btn-ghost" onclick="calcInput('5')">5</button>
+                        <button class="btn btn-ghost" onclick="calcInput('6')">6</button>
+                        <button class="btn btn-secondary" onclick="calcInput('-')">−</button>
+                        <button class="btn btn-ghost" onclick="calcInput('1')">1</button>
+                        <button class="btn btn-ghost" onclick="calcInput('2')">2</button>
+                        <button class="btn btn-ghost" onclick="calcInput('3')">3</button>
+                        <button class="btn btn-secondary" onclick="calcInput('+')">+</button>
+                        <button class="btn btn-ghost" onclick="calcInput('0')" style="grid-column: span 2;">0</button>
+                        <button class="btn btn-ghost" onclick="calcInput('.')">.</button>
+                        <button class="btn btn-primary" onclick="calcCalculate()">=</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="qrcode">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🔲 二维码生成器</h2>
+                    <p class="section-subtitle">将文本或链接转换为二维码图片</p>
+                </div>
+                <div class="card" style="max-width: 500px; margin: 0 auto;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px;">输入文本或链接</label>
+                        <textarea id="qrText" class="form-input form-textarea" style="height: 80px;" placeholder="在此输入要生成二维码的文本..."></textarea>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px;">二维码大小</label>
+                        <select id="qrSize" class="form-input" style="width: 100%;">
+                            <option value="100">小 (100x100)</option>
+                            <option value="200" selected>中 (200x200)</option>
+                            <option value="300">大 (300x300)</option>
+                            <option value="400">特大 (400x400)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%; margin-bottom: 20px;" onclick="generateQRCode()">生成二维码</button>
+                    <div id="qrResult" style="text-align: center; padding: 30px; background: white; border-radius: 8px; min-height: 200px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                        <span style="color: var(--text-muted);">二维码将显示在这里</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="timestamp">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🕐 时间戳转换</h2>
+                    <p class="section-subtitle">时间戳与日期时间格式相互转换</p>
+                </div>
+                <div class="card" style="max-width: 700px; margin: 0 auto;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+                        <div class="timezone-card current">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">当前时间戳</div>
+                            <div id="currentTimestamp" style="font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600;"></div>
+                        </div>
+                        <div class="timezone-card current">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">当前日期时间</div>
+                            <div id="currentDateTime" style="font-family: 'JetBrains Mono', monospace; font-size: 16px;"></div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; margin-bottom: 8px;">时间戳转日期</label>
+                        <div style="display: flex; gap: 12px;">
+                            <input type="number" id="timestampInput" class="form-input" placeholder="输入时间戳（秒）..." style="flex: 1;">
+                            <button class="btn btn-primary" onclick="timestampToDate()">转换</button>
+                        </div>
+                        <div id="timestampResult" style="margin-top: 12px; padding: 12px; background: var(--bg-dark); border-radius: 8px; font-family: 'JetBrains Mono', monospace;"></div>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px;">日期转时间戳</label>
+                        <div style="display: flex; gap: 12px;">
+                            <input type="datetime-local" id="dateInput" class="form-input" style="flex: 1;">
+                            <button class="btn btn-primary" onclick="dateToTimestamp()">转换</button>
+                        </div>
+                        <div id="dateResult" style="margin-top: 12px; padding: 12px; background: var(--bg-dark); border-radius: 8px; font-family: 'JetBrains Mono', monospace;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="passwordChecker">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🔐 密码强度检测</h2>
+                    <p class="section-subtitle">检测密码强度，获取安全建议</p>
+                </div>
+                <div class="card" style="max-width: 600px; margin: 0 auto;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px;">输入要检测的密码</label>
+                        <input type="password" id="passwordInput" class="form-input" placeholder="在此输入密码..." style="font-size: 18px; padding: 16px;" oninput="checkPasswordStrength()">
+                        <div style="display: flex; gap: 12px; margin-top: 12px;">
+                            <button class="btn btn-secondary btn-sm" onclick="togglePasswordVisibility()">👁 显示/隐藏</button>
+                            <button class="btn btn-secondary btn-sm" onclick="checkPasswordStrength()">🔄 重新检测</button>
+                        </div>
+                    </div>
+                    <div id="passwordStrengthResult" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 600;">密码强度</span>
+                            <span id="strengthLabel" style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;"></span>
+                        </div>
+                        <div class="strength-bar">
+                            <div id="strengthFill" class="strength-fill" style="width: 0%;"></div>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">详细信息</div>
+                            <div id="strengthDetails" style="font-size: 14px; line-height: 1.8;"></div>
+                        </div>
+                        <div id="strengthFeedback" style="margin-top: 16px; padding: 12px; background: var(--bg-dark); border-radius: 8px;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="jsonFormatter">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">📋 JSON 格式化工具</h2>
+                    <p class="section-subtitle">JSON 格式美化、压缩和语法检查</p>
+                </div>
+                <div class="card" style="max-width: 900px; margin: 0 auto;">
+                    <div class="quick-actions">
+                        <button class="btn btn-primary btn-sm" onclick="formatJSON('pretty')">✨ 美化格式</button>
+                        <button class="btn btn-secondary btn-sm" onclick="formatJSON('minify')">📦 压缩</button>
+                        <button class="btn btn-secondary btn-sm" onclick="validateJSON()">✅ 验证</button>
+                        <button class="btn btn-secondary btn-sm" onclick="copyJSON()">📋 复制</button>
+                        <button class="btn btn-secondary btn-sm" onclick="clearJSON()">🗑 清空</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px;">输入 JSON</label>
+                            <textarea id="jsonInput" class="form-input form-textarea json-result" style="height: 350px; font-family: 'JetBrains Mono', monospace;" placeholder='{"name": "示例", "value": 123}'></textarea>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px;">输出结果</label>
+                            <textarea id="jsonOutput" class="form-input form-textarea json-result" style="height: 350px; background: var(--bg-dark); font-family: 'JetBrains Mono', monospace;" readonly></textarea>
+                        </div>
+                    </div>
+                    <div id="jsonStatus" style="margin-top: 16px; padding: 12px; border-radius: 8px; display: none;"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="unitConverter">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">📏 单位换算器</h2>
+                    <p class="section-subtitle">长度、重量、温度、面积、体积等常用单位换算</p>
+                </div>
+                <div class="card" style="max-width: 700px; margin: 0 auto;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 12px;">换算类型</label>
+                        <select id="unitType" class="form-input" style="width: 100%;" onchange="updateUnitOptions()">
+                            <option value="length">长度</option>
+                            <option value="weight">重量</option>
+                            <option value="temperature">温度</option>
+                            <option value="area">面积</option>
+                            <option value="volume">体积</option>
+                            <option value="time">时间</option>
+                            <option value="pixel">像素单位</option>
+                        </select>
+                    </div>
+                    <div class="unit-row">
+                        <input type="number" id="unitValue" class="form-input" value="1" style="flex: 1;" placeholder="输入数值" oninput="convertUnit()">
+                        <select id="unitFrom" class="form-input" style="width: 120px;" onchange="convertUnit()"></select>
+                        <span style="font-size: 24px; color: var(--text-muted);">→</span>
+                        <select id="unitTo" class="form-input" style="width: 120px;" onchange="convertUnit()"></select>
+                        <input type="text" id="unitResult" class="form-input" style="flex: 1; background: var(--bg-dark);" readonly>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="timezoneConverter">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🌍 时区转换器</h2>
+                    <p class="section-subtitle">全球主要城市时区查询和转换</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 1000px; margin: 0 auto;">
+                    <div class="card">
+                        <h3 style="font-size: 18px; margin-bottom: 16px;">🌐 选择时区</h3>
+                        <select id="timezoneSelect" class="form-input" style="width: 100%; margin-bottom: 16px;" onchange="convertTimezone()"></select>
+                        <div id="timezoneCurrent" class="timezone-card current" style="padding: 16px; background: var(--bg-dark); border-radius: 8px;">
+                            <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;" id="tzTime">--:--:--</div>
+                            <div style="color: var(--text-secondary);" id="tzDate">YYYY-MM-DD</div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;" id="tzOffset">UTC +00:00</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 style="font-size: 18px; margin-bottom: 16px;">🔄 换算为</h3>
+                        <select id="targetTimezone" class="form-input" style="width: 100%; margin-bottom: 16px;" onchange="convertTimezone()"></select>
+                        <div id="timezoneTarget" class="timezone-card" style="padding: 16px; background: var(--bg-dark); border-radius: 8px;">
+                            <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px;" id="tzTargetTime">--:--:--</div>
+                            <div style="color: var(--text-secondary);" id="tzTargetDate">YYYY-MM-DD</div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;" id="tzTargetOffset">UTC +00:00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="currencyConverter">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">💱 货币换算器</h2>
+                    <p class="section-subtitle">实时汇率查询和货币换算</p>
+                </div>
+                <div class="card" style="max-width: 700px; margin: 0 auto;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px;">汇率基准</label>
+                        <select id="currencyBase" class="form-input" style="width: 100%;" onchange="convertCurrency()">
+                            <option value="USD">美元 (USD)</option>
+                            <option value="CNY">人民币 (CNY)</option>
+                            <option value="EUR">欧元 (EUR)</option>
+                            <option value="GBP">英镑 (GBP)</option>
+                            <option value="JPY">日元 (JPY)</option>
+                            <option value="KRW">韩元 (KRW)</option>
+                            <option value="HKD">港币 (HKD)</option>
+                            <option value="TWD">新台币 (TWD)</option>
+                        </select>
+                    </div>
+                    <div class="currency-row">
+                        <input type="number" id="currencyAmount" class="form-input" value="1" style="flex: 1; font-size: 20px; padding: 16px;" placeholder="输入金额" oninput="convertCurrency()">
+                        <select id="currencyFrom" class="form-input" style="width: 140px;" onchange="convertCurrency()"></select>
+                        <span style="font-size: 24px;">→</span>
+                        <select id="currencyTo" class="form-input" style="width: 140px;" onchange="convertCurrency()"></select>
+                    </div>
+                    <div id="currencyResult" style="margin-top: 20px; padding: 20px; background: var(--primary); border-radius: 8px; text-align: center;">
+                        <div style="font-size: 32px; font-weight: 700; color: white;" id="currencyOutput">0.00</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.8); margin-top: 8px;" id="currencyRate">1 USD = 7.24 CNY</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="base64Tool">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🔣 Base64 编解码</h2>
+                    <p class="section-subtitle">Base64 编码和解码工具</p>
+                </div>
+                <div class="card" style="max-width: 900px; margin: 0 auto;">
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn btn-primary" onclick="base64Mode='encode'; document.getElementById('base64ModeLabel').textContent='编码模式'; processBase64();">编码</button>
+                        <button class="btn btn-secondary" onclick="base64Mode='decode'; document.getElementById('base64ModeLabel').textContent='解码模式'; processBase64();">解码</button>
+                        <span id="base64ModeLabel" style="margin-left: 16px; font-weight: 600;">编码模式</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px;">输入文本</label>
+                            <textarea id="base64Input" class="form-input form-textarea" style="height: 250px;" placeholder="在此输入文本..." oninput="processBase64()"></textarea>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px;">输出结果</label>
+                            <textarea id="base64Output" class="form-input form-textarea" style="height: 250px; background: var(--bg-dark);" readonly></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="imageTool">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🖼️ 图片处理工具</h2>
+                    <p class="section-subtitle">图片压缩、格式转换、尺寸调整、水印添加</p>
+                </div>
+                <div class="card" style="max-width: 900px; margin: 0 auto;">
+                    <div id="uploadArea" style="border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: var(--transition);" onclick="document.getElementById('imageUpload').click()">
+                        <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="imageTool.handleUpload(event)">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📁</div>
+                        <p style="font-size: 18px; margin-bottom: 8px;">点击或拖拽图片到这里</p>
+                        <p style="color: var(--text-muted); font-size: 14px;">支持 PNG、JPEG、GIF、BMP、WebP 格式</p>
+                    </div>
+                    <div id="imagePreview" style="text-align: center; margin-bottom: 16px;"></div>
+                    <div id="imageActions" style="display: none; margin-bottom: 16px;">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+                            <button class="btn btn-secondary btn-sm" onclick="imageTool.loadImageInfo()">📊 查看信息</button>
+                            <button class="btn btn-secondary btn-sm" onclick="imageTool.reset()">🔄 重新上传</button>
+                        </div>
+                        <div id="imageInfo" style="margin-bottom: 16px;"></div>
+                    </div>
+                    <div id="imageActions" style="display: none;" class="image-tabs">
+                        <div class="tabs" style="margin-bottom: 16px;">
+                            <button class="tab active" data-tab="resize" onclick="switchImageTab('resize')">调整尺寸</button>
+                            <button class="tab" data-tab="compress" onclick="switchImageTab('compress')">压缩图片</button>
+                            <button class="tab" data-tab="convert" onclick="switchImageTab('convert')">格式转换</button>
+                            <button class="tab" data-tab="watermark" onclick="switchImageTab('watermark')">添加水印</button>
+                        </div>
+                        <div id="resizeTab" class="image-tab-content active">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px;">宽度 (px)</label>
+                                    <input type="number" id="resizeWidth" class="form-input" value="800" min="1" max="4096">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px;">高度 (px)</label>
+                                    <input type="number" id="resizeHeight" class="form-input" value="600" min="1" max="4096">
+                                </div>
+                            </div>
+                            <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; cursor: pointer;">
+                                <input type="checkbox" id="maintainRatio" checked>
+                                <span>保持宽高比</span>
+                            </label>
+                            <button class="btn btn-primary" style="width: 100%;" onclick="imageTool.resize()">🔄 调整尺寸</button>
+                        </div>
+                        <div id="compressTab" class="image-tab-content" style="display: none;">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px;">压缩质量: <span id="qualityValue">80%</span></label>
+                                <input type="range" id="compressQuality" class="form-input" value="80" min="10" max="100" style="width: 100%;">
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px;">最大尺寸限制</label>
+                                <select id="maxSize" class="form-input" style="width: 100%;">
+                                    <option value="800">800px</option>
+                                    <option value="1024" selected>1024px</option>
+                                    <option value="1920">1920px</option>
+                                    <option value="2560">2560px</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" style="width: 100%;" onclick="imageTool.compress()">📦 压缩图片</button>
+                        </div>
+                        <div id="convertTab" class="image-tab-content" style="display: none;">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px;">目标格式</label>
+                                <select id="targetFormat" class="form-input" style="width: 100%;">
+                                    <option value="PNG">PNG</option>
+                                    <option value="JPEG">JPEG</option>
+                                    <option value="WEBP">WebP</option>
+                                    <option value="BMP">BMP</option>
+                                    <option value="GIF">GIF</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" style="width: 100%;" onclick="imageTool.convert()">🔄 转换格式</button>
+                        </div>
+                        <div id="watermarkTab" class="image-tab-content" style="display: none;">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px;">水印文字</label>
+                                <input type="text" id="watermarkText" class="form-input" value="RAILGUN" placeholder="输入水印文字">
+                            </div>
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 8px;">位置</label>
+                                <select id="watermarkPosition" class="form-input" style="width: 100%;">
+                                    <option value="bottom-right">右下角</option>
+                                    <option value="bottom-left">左下角</option>
+                                    <option value="top-right">右上角</option>
+                                    <option value="top-left">左上角</option>
+                                    <option value="center">居中</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" style="width: 100%;" onclick="imageTool.watermark()">✏️ 添加水印</button>
+                        </div>
+                    </div>
+                    <div id="imageResult" style="margin-top: 16px;"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="videoDownload">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">📥 视频下载</h2>
+                    <p class="section-subtitle">从各大平台下载视频</p>
+                </div>
+                <div class="card" style="max-width: 800px; margin: 0 auto;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                        <select id="downloadPlatform" class="form-input" style="width: 150px;">
+                            <option value="bilibili">B 站</option>
+                            <option value="douyin">抖音</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="xiaohongshu">小红书</option>
+                        </select>
+                        <input type="text" id="downloadUrl" class="form-input" placeholder="粘贴视频链接..." style="flex: 1;">
+                        <button class="btn btn-primary" onclick="startDownload()">下载</button>
+                    </div>
+                    <div id="downloadStatus" style="padding: 16px; background: var(--bg-dark); border-radius: 8px;">
+                        <p style="color: var(--text-secondary);">等待输入链接...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="colorPicker">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🎨 颜色选择器</h2>
+                    <p class="section-subtitle">生成随机颜色，转换颜色格式</p>
+                </div>
+                <div class="card" style="max-width: 700px; margin: 0 auto;">
+                    <div style="margin-bottom: 24px;">
+                        <button class="btn btn-primary" style="width: 100%;" onclick="generateRandomColor()">🎲 生成随机颜色</button>
+                    </div>
+                    <div id="colorResult" style="margin-bottom: 24px;"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <h3 style="font-size: 16px; margin-bottom: 12px;">HEX 转 RGB</h3>
+                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                <input type="text" id="hexInput" class="form-input" placeholder="#FFFFFF" style="flex: 1;">
+                                <button class="btn btn-secondary" onclick="hexToRgb()">转换</button>
+                            </div>
+                            <div id="hexResult" style="padding: 12px; background: var(--bg-dark); border-radius: 8px; font-family: monospace;"></div>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 16px; margin-bottom: 12px;">RGB 转 HEX</h3>
+                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                <input type="text" id="rgbInput" class="form-input" placeholder="255, 255, 255" style="flex: 1;">
+                                <button class="btn btn-secondary" onclick="rgbToHex()">转换</button>
+                            </div>
+                            <div id="rgbResult" style="padding: 12px; background: var(--bg-dark); border-radius: 8px; font-family: monospace;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="bytesConverter">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">💾 字节转换器</h2>
+                    <p class="section-subtitle">字节单位换算</p>
+                </div>
+                <div class="card" style="max-width: 600px; margin: 0 auto;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px;">输入数值</label>
+                        <input type="number" id="bytesValue" class="form-input" placeholder="输入字节数值..." value="1024" oninput="convertBytes()">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 8px;">从</label>
+                            <select id="bytesFrom" class="form-input" onchange="convertBytes()">
+                                <option value="bytes">Bytes</option>
+                                <option value="KB" selected>KB</option>
+                                <option value="MB">MB</option>
+                                <option value="GB">GB</option>
+                                <option value="TB">TB</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 8px;">到</label>
+                            <select id="bytesTo" class="form-input" onchange="convertBytes()">
+                                <option value="bytes">Bytes</option>
+                                <option value="KB">KB</option>
+                                <option value="MB" selected>MB</option>
+                                <option value="GB">GB</option>
+                                <option value="TB">TB</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="padding: 20px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 12px; text-align: center; color: white;">
+                        <div id="bytesResult" style="font-size: 32px; font-weight: 700; font-family: 'JetBrains Mono', monospace;">0.001 MB</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="idcardTool">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🪪 身份证查询</h2>
+                    <p class="section-subtitle">根据身份证号码查询信息</p>
+                </div>
+                <div class="card" style="max-width: 600px; margin: 0 auto;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                        <input type="text" id="idcardInput" class="form-input" placeholder="请输入18位身份证号码..." maxlength="18" style="flex: 1;">
+                        <button class="btn btn-primary" onclick="queryIdcard()">查询</button>
+                    </div>
+                    <div id="idcardResult" style="display: none;">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                            <div style="padding: 16px; background: var(--bg-dark); border-radius: 8px;">
+                                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">地区</div>
+                                <div style="font-size: 16px; font-weight: 600;" id="idcardProvince">-</div>
+                            </div>
+                            <div style="padding: 16px; background: var(--bg-dark); border-radius: 8px;">
+                                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">生日</div>
+                                <div style="font-size: 16px; font-weight: 600;" id="idcardBirthday">-</div>
+                            </div>
+                            <div style="padding: 16px; background: var(--bg-dark); border-radius: 8px;">
+                                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">年龄</div>
+                                <div style="font-size: 16px; font-weight: 600;" id="idcardAge">-</div>
+                            </div>
+                            <div style="padding: 16px; background: var(--bg-dark); border-radius: 8px;">
+                                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">性别</div>
+                                <div style="font-size: 16px; font-weight: 600;" id="idcardGender">-</div>
+                            </div>
+                            <div style="padding: 16px; background: var(--bg-dark); border-radius: 8px;">
+                                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">星座</div>
+                                <div style="font-size: 16px; font-weight: 600;" id="idcardZodiac">-</div>
+                            </div>
+                            <div style="padding: 16px; background: var(--bg-dark); border-radius: 8px;">
+                                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">生肖</div>
+                                <div style="font-size: 16px; font-weight: 600;" id="idcardChineseZodiac">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="idcardError" style="display: none; padding: 16px; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); border-radius: 8px; color: var(--error); text-align: center;"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section tool-panel" id="embedTool">
+            <div class="container">
+                <span class="tool-close" onclick="closeTool()">×</span>
+                <div class="section-header">
+                    <h2 class="section-title">🖼️ 多媒体嵌入</h2>
+                    <p class="section-subtitle">生成图片/视频嵌入代码，支持 Markdown 和 BBCode</p>
+                </div>
+                <div class="card" style="max-width: 800px; margin: 0 auto;">
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                        <select id="embedType" class="form-input" style="width: 150px;" onchange="updateEmbedUI()">
+                            <option value="image">图片</option>
+                            <option value="video">视频</option>
+                            <option value="audio">音频</option>
+                            <option value="iframe">网页嵌入</option>
+                        </select>
+                        <select id="embedFormat" class="form-input" style="width: 150px;" onchange="generateEmbedCode()">
+                            <option value="html">HTML</option>
+                            <option value="markdown">Markdown</option>
+                            <option value="bbcode">BBCode</option>
+                            <option value="url">纯URL</option>
+                        </select>
+                    </div>
+                    
+                    <div id="embedInputs">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px;" id="embedUrlLabel">资源 URL</label>
+                            <input type="text" id="embedUrl" class="form-input" placeholder="https://example.com/image.jpg" oninput="generateEmbedCode()">
+                        </div>
+                        <div id="embedAltDiv" style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px;">描述文字（alt/title）</label>
+                            <input type="text" id="embedAlt" class="form-input" placeholder="图片描述..." oninput="generateEmbedCode()">
+                        </div>
+                        <div id="embedSizeDiv" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px;">宽度 (px/%或留空)</label>
+                                <input type="text" id="embedWidth" class="form-input" placeholder="如: 500 或 100%" oninput="generateEmbedCode()">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px;">对齐方式</label>
+                                <select id="embedAlign" class="form-input" onchange="generateEmbedCode()">
+                                    <option value="none">默认</option>
+                                    <option value="left">左对齐</option>
+                                    <option value="center">居中</option>
+                                    <option value="right">右对齐</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="embedLinkDiv" style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px;">点击跳转链接（可选）</label>
+                            <input type="text" id="embedLink" class="form-input" placeholder="https://example.com" oninput="generateEmbedCode()">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <label style="margin: 0;">预览效果</label>
+                            <button class="btn btn-ghost btn-sm" onclick="previewEmbed()">🔄 刷新预览</button>
+                        </div>
+                        <div id="embedPreview" style="padding: 20px; background: var(--bg-dark); border-radius: 8px; min-height: 100px; display: flex; align-items: center; justify-content: center;">
+                            <span style="color: var(--text-muted);">输入 URL 后显示预览</span>
+                        </div>
+                    </div>
+
+                    <div style="position: relative;">
+                        <label style="display: block; margin-bottom: 8px;">生成代码</label>
+                        <textarea id="embedCode" class="form-input form-textarea" style="height: 150px; font-family: 'JetBrains Mono', monospace; font-size: 13px; background: var(--bg-dark);" readonly></textarea>
+                        <button class="btn btn-primary" style="position: absolute; bottom: 12px; right: 12px;" onclick="copyEmbedCode()">📋 复制代码</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="footer-logo">
+                        <span>⚡</span>
+                        <span>RAILGUN</span>
+                    </div>
+                    <p class="footer-description">一款致力于提升工作效率的多功能桌面应用。</p>
+                </div>
+                <div>
+                    <h4 class="footer-title">产品</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">首页</a></li>
+                        <li><a href="tools.html">在线工具</a></li>
+                        <li><a href="about.html">关于我们</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="footer-title">链接</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">GitHub</a></li>
+                        <li><a href="#">文档</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 RAILGUN Team. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+    <script>
+        let base64Mode = 'encode';
+        const shortcutMap = {'1': 'musicPlayer', '2': 'aiChat', '3': 'videoDownload', '4': 'randomGen', '5': 'textTools', '6': 'calculator', '7': 'qrcode', '8': 'timestamp', '9': 'passwordChecker', '0': 'jsonFormatter', 'a': 'imageTool', 'c': 'colorPicker', 'b': 'bytesConverter', 'i': 'idcardTool', 'e': 'embedTool'};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.getElementById('pageLoader').classList.add('hidden');
+                createFloatingElements();
+            }, 800);
+            
+            App.init();
+            initTimestamp();
+            initUnitConverter();
+            initTimezoneConverter();
+            initCurrencyConverter();
+            initKeyboardShortcuts();
+            renderFavorites();
+            renderRecentTools();
+            loadUsageStats();
+            document.getElementById('favCount').textContent = favorites.length;
+            imageTool.init();
+            initCursorTrail();
+        });
+
+        function createFloatingElements() {
+            const container = document.getElementById('floatingElements');
+            const elements = ['✨', '⭐', '💫', '🌟', '✨', '🎀', '💖', '🦋', '🌸', '💜'];
+            
+            for (let i = 0; i < 15; i++) {
+                const el = document.createElement('div');
+                el.className = 'floating-element';
+                el.textContent = elements[Math.floor(Math.random() * elements.length)];
+                el.style.left = Math.random() * 100 + '%';
+                el.style.animationDelay = Math.random() * 8 + 's';
+                el.style.animationDuration = (6 + Math.random() * 6) + 's';
+                el.style.fontSize = (12 + Math.random() * 20) + 'px';
+                container.appendChild(el);
+            }
+        }
+
+        function initCursorTrail() {
+            const trail = document.getElementById('cursorTrail');
+            document.addEventListener('mousemove', (e) => {
+                trail.style.left = e.clientX + 'px';
+                trail.style.top = e.clientY + 'px';
+                trail.classList.add('active');
+            });
+            document.addEventListener('mouseleave', () => {
+                trail.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.btn, .tool-card, .tab, .recent-tool-item').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    createRippleEffect(e);
+                    createEmojiPop(e);
+                });
+            });
+        }
+
+        function createRippleEffect(e) {
+            const ripple = document.createElement('div');
+            ripple.className = 'ripple-effect';
+            const rect = e.target.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+            e.target.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 600);
+        }
+
+        function createEmojiPop(e) {
+            const emojis = ['✨', '⭐', '💫', '🌟', '💖', '🦋', '🌸', '🎀', '💜'];
+            const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+            const pop = document.createElement('div');
+            pop.className = 'emoji-pop';
+            pop.textContent = emoji;
+            pop.style.left = e.clientX + 'px';
+            pop.style.top = e.clientY + 'px';
+            document.body.appendChild(pop);
+            setTimeout(() => pop.remove(), 1000);
+        }
+
+        function createSparkles(container) {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'sparkle';
+                    sparkle.textContent = '✨';
+                    sparkle.style.left = Math.random() * 100 + '%';
+                    sparkle.style.top = Math.random() * 100 + '%';
+                    sparkle.style.animationDelay = Math.random() * 2 + 's';
+                    container.appendChild(sparkle);
+                    setTimeout(() => sparkle.remove(), 3000);
+                }, i * 200);
+            }
+        }
+
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && shortcutMap[e.key]) {
+                    e.preventDefault();
+                    showTool(shortcutMap[e.key]);
+                }
+                if (e.ctrlKey && e.key === 'd') {
+                    e.preventDefault();
+                    toggleTheme();
+                }
+            });
+        }
+
+        function filterTools(category) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.tool-card').forEach(card => {
+                card.style.display = (category === 'all' || card.dataset.category === category) ? 'flex' : 'none';
+            });
+        }
+
+        function showTool(toolId) {
+            document.querySelectorAll('.tool-panel').forEach(p => p.classList.remove('active'));
+            const tool = document.getElementById(toolId);
+            if (tool) {
+                tool.classList.add('active');
+                tool.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            document.getElementById('toolPanels').style.display = 'block';
+            updateToolStats(toolId);
+        }
+
+        function closeTool() {
+            document.querySelectorAll('.tool-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('toolPanels').style.display = 'none';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function generateRandomNumber() {
+            const min = parseInt(document.getElementById('randMin').value) || 1;
+            const max = parseInt(document.getElementById('randMax').value) || 100;
+            const result = Math.floor(Math.random() * (max - min + 1)) + min;
+            document.getElementById('randomResult').textContent = result;
+        }
+
+        function generatePassword() {
+            const length = parseInt(document.getElementById('passwordLength').value);
+            const options = { uppercase: document.getElementById('useUppercase').checked, lowercase: document.getElementById('useLowercase').checked, numbers: document.getElementById('useNumbers').checked, symbols: document.getElementById('useSymbols').checked };
+            apiCall('/api/random/password', { method: 'POST', body: JSON.stringify({ length, ...options }) }).then(res => {
+                if (res.success) {
+                    document.getElementById('passwordResult').innerHTML = `<div style="word-break: break-all;">${res.data.password}</div><div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">强度: ${res.data.strength}</div>`;
+                }
+            });
+        }
+
+        function generateColor(format) {
+            apiCall('/api/random/color').then(res => {
+                if (res.success && res.data.colors.length > 0) {
+                    const color = res.data.colors[0];
+                    document.getElementById('colorResult').innerHTML = `<div class="color-preview" style="background: ${color.hex};">${color.hex}</div><div style="font-family: monospace;">${color.hex}</div>`;
+                }
+            });
+        }
+
+        function generateUUID() {
+            apiCall('/api/random/uuid', { method: 'POST', body: JSON.stringify({ count: 1 }) }).then(res => {
+                if (res.success) document.getElementById('uuidResult').textContent = res.data.uuids[0];
+            });
+        }
+
+        function convertText(conversion) {
+            const text = document.getElementById('textInput').value;
+            if (!text) return;
+            apiCall('/api/text/convert', { method: 'POST', body: JSON.stringify({ text, conversion }) }).then(res => {
+                if (res.success) document.getElementById('textOutput').value = res.data.result;
+            });
+        }
+
+        let calcExpression = '';
+        function calcInput(value) {
+            const display = document.getElementById('calcDisplay');
+            if (value === 'C') { calcExpression = ''; display.value = '0'; }
+            else { calcExpression += value; display.value = calcExpression; }
+        }
+
+        function calcCalculate() {
+            if (!calcExpression) return;
+            apiCall('/api/calculator/calculate', { method: 'POST', body: JSON.stringify({ expression: calcExpression }) }).then(res => {
+                const display = document.getElementById('calcDisplay');
+                if (res.success) { display.value = res.data.result; calcExpression = res.data.result; }
+                else { display.value = 'Error'; calcExpression = ''; }
+            });
+        }
+
+        function generateQRCode() {
+            const text = document.getElementById('qrText').value;
+            if (!text) return;
+            const size = document.getElementById('qrSize').value;
+            apiCall('/api/qrcode/generate', { method: 'POST', body: JSON.stringify({ text, size: parseInt(size) }) }).then(res => {
+                const result = document.getElementById('qrResult');
+                if (res.success && res.data.image) result.innerHTML = `<img src="${res.data.image}" alt="QR Code" style="max-width: 200px;">`;
+                else result.innerHTML = `<span style="color: var(--error);">${res.error || '生成失败'}</span>`;
+            });
+        }
+
+        function initTimestamp() {
+            apiCall('/api/timestamp/now').then(res => {
+                if (res.success) {
+                    document.getElementById('currentTimestamp').textContent = res.data.timestamp;
+                    document.getElementById('currentDateTime').textContent = res.data.datetime;
+                }
+            });
+        }
+
+        function timestampToDate() {
+            const ts = document.getElementById('timestampInput').value;
+            if (!ts) return;
+            const date = new Date(parseInt(ts) * 1000);
+            document.getElementById('timestampResult').innerHTML = `<div>日期: ${date.toLocaleString('zh-CN')}</div>`;
+        }
+
+        function dateToTimestamp() {
+            const dateStr = document.getElementById('dateInput').value;
+            if (!dateStr) return;
+            const date = new Date(dateStr);
+            document.getElementById('dateResult').textContent = Math.floor(date.getTime() / 1000);
+        }
+
+        function checkPasswordStrength() {
+            const password = document.getElementById('passwordInput').value;
+            const result = document.getElementById('passwordStrengthResult');
+            if (!password) { result.style.display = 'none'; return; }
+            result.style.display = 'block';
+            apiCall('/api/password/strength', { method: 'POST', body: JSON.stringify({ password }) }).then(res => {
+                if (res.success) {
+                    const { score, strength, feedback } = res.data;
+                    const fill = document.getElementById('strengthFill');
+                    const label = document.getElementById('strengthLabel');
+                    fill.style.width = `${(score / 6) * 100}%`;
+                    fill.className = 'strength-fill strength-' + strength;
+                    label.textContent = { weak: '弱', medium: '中等', strong: '强' }[strength];
+                    label.style.background = { weak: 'var(--error)', medium: 'var(--warning)', strong: 'var(--success)' }[strength];
+                    label.style.color = 'white';
+                    document.getElementById('strengthDetails').innerHTML = `长度: ${password.length} 字符<br>评分: ${score}/6`;
+                    document.getElementById('strengthFeedback').innerHTML = '<strong>建议:</strong><br>• ' + feedback.join('<br>• ');
+                }
+            });
+        }
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('passwordInput');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function formatJSON(mode) {
+            const json = document.getElementById('jsonInput').value;
+            if (!json) return;
+            apiCall('/api/json/format', { method: 'POST', body: JSON.stringify({ json, minify: mode === 'minify' }) }).then(res => {
+                if (res.success) {
+                    document.getElementById('jsonOutput').value = res.data.result;
+                    showJsonStatus('success', '格式化成功');
+                } else {
+                    showJsonStatus('error', res.error);
+                }
+            });
+        }
+
+        function validateJSON() {
+            const json = document.getElementById('jsonInput').value;
+            if (!json) return;
+            apiCall('/api/json/validate', { method: 'POST', body: JSON.stringify({ json }) }).then(res => {
+                if (res.success) {
+                    showJsonStatus('success', '有效 JSON - 类型: ' + res.data.type);
+                } else {
+                    showJsonStatus('error', '无效: ' + res.data.error);
+                }
+            });
+        }
+
+        function showJsonStatus(type, message) {
+            const status = document.getElementById('jsonStatus');
+            status.style.display = 'block';
+            status.style.background = type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+            status.style.color = type === 'success' ? 'var(--success)' : 'var(--error)';
+            status.textContent = message;
+        }
+
+        function copyJSON() {
+            const output = document.getElementById('jsonOutput').value;
+            if (output) navigator.clipboard.writeText(output).then(() => showJsonStatus('success', '已复制到剪贴板'));
+        }
+
+        function clearJSON() {
+            document.getElementById('jsonInput').value = '';
+            document.getElementById('jsonOutput').value = '';
+            document.getElementById('jsonStatus').style.display = 'none';
+        }
+
+        const unitOptions = {
+            length: { units: ['m', 'km', 'cm', 'mm', 'inch', 'ft'], names: { m: '米', km: '千米', cm: '厘米', mm: '毫米', inch: '英寸', ft: '英尺' } },
+            weight: { units: ['kg', 'g', 'mg', 'lb'], names: { kg: '千克', g: '克', mg: '毫克', lb: '磅' } },
+            temperature: { units: ['C', 'F', 'K'], names: { C: '摄氏度', F: '华氏度', K: '开尔文' } },
+            time: { units: ['s', 'min', 'h', 'd'], names: { s: '秒', min: '分钟', h: '小时', d: '天' } },
+            pixel: { units: ['px', 'pt', 'em'], names: { px: '像素', pt: '磅', em: 'em' } }
+        };
+
+        function initUnitConverter() { updateUnitOptions(); }
+
+        function updateUnitOptions() {
+            const type = document.getElementById('unitType').value;
+            const options = unitOptions[type];
+            const from = document.getElementById('unitFrom');
+            const to = document.getElementById('unitTo');
+            from.innerHTML = options.units.map(u => `<option value="${u}">${u} (${options.names[u]})</option>`).join('');
+            to.innerHTML = options.units.map(u => `<option value="${u}">${u} (${options.names[u]})</option>`).join('');
+            if (options.units.length > 1) to.selectedIndex = 1;
+            convertUnit();
+        }
+
+        function convertUnit() {
+            const value = parseFloat(document.getElementById('unitValue').value);
+            const from = document.getElementById('unitFrom').value;
+            const to = document.getElementById('unitTo').value;
+            if (isNaN(value)) { document.getElementById('unitResult').value = ''; return; }
+            apiCall('/api/unit/convert', { method: 'POST', body: JSON.stringify({ value, from, to }) }).then(res => {
+                if (res.success) document.getElementById('unitResult').value = res.data.result;
+            });
+        }
+
+        function initTimezoneConverter() {
+            const timezones = ['UTC', 'Asia/Shanghai', 'Asia/Tokyo', 'Asia/Seoul', 'America/New_York', 'America/Los_Angeles', 'Europe/London'];
+            const options = timezones.map(t => `<option value="${t}">${t}</option>`).join('');
+            document.getElementById('timezoneSelect').innerHTML = options;
+            document.getElementById('targetTimezone').innerHTML = options;
+            convertTimezone();
+        }
+
+        function convertTimezone() {
+            const now = new Date();
+            document.getElementById('tzTime').textContent = now.toLocaleTimeString('zh-CN');
+            document.getElementById('tzDate').textContent = now.toLocaleDateString('zh-CN');
+            document.getElementById('tzOffset').textContent = 'UTC' + (now.getTimezoneOffset() <= 0 ? '+' : '-') + Math.abs(now.getTimezoneOffset() / 60);
+        }
+
+        function initCurrencyConverter() {
+            const currencies = ['USD', 'CNY', 'EUR', 'GBP', 'JPY', 'KRW', 'HKD', 'TWD'];
+            const options = currencies.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('currencyFrom').innerHTML = options;
+            document.getElementById('currencyTo').innerHTML = options;
+            document.getElementById('currencyTo').selectedIndex = 1;
+            convertCurrency();
+        }
+
+        function convertCurrency() {
+            const amount = parseFloat(document.getElementById('currencyAmount').value) || 0;
+            document.getElementById('currencyOutput').textContent = amount.toFixed(2);
+        }
+
+        function processBase64() {
+            const input = document.getElementById('base64Input').value;
+            if (!input) { document.getElementById('base64Output').value = ''; return; }
+            if (base64Mode === 'encode') {
+                apiCall('/api/base64/encode', { method: 'POST', body: JSON.stringify({ text: input }) }).then(res => {
+                    if (res.success) document.getElementById('base64Output').value = res.data.result;
+                });
+            } else {
+                apiCall('/api/base64/decode', { method: 'POST', body: JSON.stringify({ text: input }) }).then(res => {
+                    if (res.success) document.getElementById('base64Output').value = res.data.result;
+                    else document.getElementById('base64Output').value = '解码失败';
+                });
+            }
+        }
+
+        function switchImageTab(tabName) {
+            const tabs = document.querySelectorAll('#imageTool .tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const contents = document.querySelectorAll('.image-tab-content');
+            contents.forEach(c => c.style.display = 'none');
+            document.getElementById(tabName + 'Tab').style.display = 'block';
+        }
+
+        function startDownload() {
+            const url = document.getElementById('downloadUrl').value;
+            if (!url) return;
+            apiCall('/api/download', { method: 'POST', body: JSON.stringify({ url }) }).then(res => {
+                const status = document.getElementById('downloadStatus');
+                if (res.success) {
+                    status.innerHTML = '<p style="color: var(--success);">✅ 已加入下载队列，任务ID: ' + res.data.task_id + '</p>';
+                } else {
+                    status.innerHTML = '<p style="color: var(--error);">❌ ' + (res.error || '下载失败') + '</p>';
+                }
+            });
+        }
+
+        function generateRandomColor() {
+            apiCall('/api/color/picker', { method: 'POST', body: JSON.stringify({ action: 'generate' }) }).then(res => {
+                if (res.success) {
+                    document.getElementById('colorResult').innerHTML = `
+                        <div style="padding: 40px; border-radius: 12px; text-align: center; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3); background: ${res.data.hex};">
+                            <div style="font-size: 32px; font-weight: 700; margin-bottom: 8px;">${res.data.hex}</div>
+                            <div style="font-size: 18px;">${res.data.rgb}</div>
+                            <div style="font-size: 14px; margin-top: 8px; opacity: 0.8;">${res.data.hsl}</div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function hexToRgb() {
+            const hex = document.getElementById('hexInput').value.trim();
+            if (!hex) return;
+            apiCall('/api/color/picker', { method: 'POST', body: JSON.stringify({ action: 'hex_to_rgb', color: hex }) }).then(res => {
+                if (res.success) {
+                    document.getElementById('hexResult').innerHTML = `
+                        <div style="margin-bottom: 8px;"><strong>HEX:</strong> ${res.data.hex}</div>
+                        <div><strong>RGB:</strong> ${res.data.rgb}</div>
+                    `;
+                } else {
+                    document.getElementById('hexResult').innerHTML = '<span style="color: var(--error);">' + (res.error || '转换失败') + '</span>';
+                }
+            });
+        }
+
+        function rgbToHex() {
+            const rgb = document.getElementById('rgbInput').value.trim();
+            if (!rgb) return;
+            apiCall('/api/color/picker', { method: 'POST', body: JSON.stringify({ action: 'rgb_to_hex', color: rgb }) }).then(res => {
+                if (res.success) {
+                    document.getElementById('rgbResult').innerHTML = `
+                        <div style="margin-bottom: 8px;"><strong>HEX:</strong> ${res.data.hex}</div>
+                        <div><strong>RGB:</strong> ${res.data.rgb}</div>
+                    `;
+                } else {
+                    document.getElementById('rgbResult').innerHTML = '<span style="color: var(--error);">' + (res.error || '转换失败') + '</span>';
+                }
+            });
+        }
+
+        function convertBytes() {
+            const value = parseFloat(document.getElementById('bytesValue').value) || 0;
+            const from = document.getElementById('bytesFrom').value;
+            const to = document.getElementById('bytesTo').value;
+            apiCall('/api/converter/bytes', { method: 'POST', body: JSON.stringify({ value, from, to }) }).then(res => {
+                if (res.success) {
+                    document.getElementById('bytesResult').textContent = res.data.formatted;
+                } else {
+                    document.getElementById('bytesResult').textContent = '0 ' + to;
+                }
+            });
+        }
+
+        function queryIdcard() {
+            const idcard = document.getElementById('idcardInput').value.trim();
+            if (!idcard) {
+                document.getElementById('idcardError').style.display = 'block';
+                document.getElementById('idcardError').textContent = '请输入身份证号码';
+                document.getElementById('idcardResult').style.display = 'none';
+                return;
+            }
+            apiCall('/api/idcard/info', { method: 'POST', body: JSON.stringify({ idcard }) }).then(res => {
+                if (res.success) {
+                    document.getElementById('idcardResult').style.display = 'block';
+                    document.getElementById('idcardError').style.display = 'none';
+                    document.getElementById('idcardProvince').textContent = res.data.province;
+                    document.getElementById('idcardBirthday').textContent = res.data.birthday;
+                    document.getElementById('idcardAge').textContent = res.data.age + ' 岁';
+                    document.getElementById('idcardGender').textContent = res.data.gender;
+                    document.getElementById('idcardZodiac').textContent = res.data.zodiac;
+                    document.getElementById('idcardChineseZodiac').textContent = res.data.chinese_zodiac;
+                } else {
+                    document.getElementById('idcardResult').style.display = 'none';
+                    document.getElementById('idcardError').style.display = 'block';
+                    document.getElementById('idcardError').textContent = res.error || '查询失败，请检查身份证号码是否正确';
+                }
+            });
+        }
+
+        function updateEmbedUI() {
+            const type = document.getElementById('embedType').value;
+            const altDiv = document.getElementById('embedAltDiv');
+            const urlLabel = document.getElementById('embedUrlLabel');
+            
+            switch(type) {
+                case 'image':
+                    urlLabel.textContent = '图片 URL';
+                    altDiv.style.display = 'block';
+                    break;
+                case 'video':
+                    urlLabel.textContent = '视频 URL (MP4/WebM)';
+                    altDiv.style.display = 'block';
+                    break;
+                case 'audio':
+                    urlLabel.textContent = '音频 URL (MP3/WAV)';
+                    altDiv.style.display = 'block';
+                    break;
+                case 'iframe':
+                    urlLabel.textContent = '网页 URL';
+                    altDiv.style.display = 'block';
+                    break;
+            }
+            generateEmbedCode();
+        }
+
+        function generateEmbedCode() {
+            const type = document.getElementById('embedType').value;
+            const format = document.getElementById('embedFormat').value;
+            const url = document.getElementById('embedUrl').value.trim();
+            const alt = document.getElementById('embedAlt').value.trim();
+            const width = document.getElementById('embedWidth').value.trim();
+            const align = document.getElementById('embedAlign').value;
+            const link = document.getElementById('embedLink').value.trim();
+            
+            let code = '';
+            let previewHtml = '';
+            
+            const styleAlign = align !== 'none' ? `text-align: ${align};` : '';
+            const styleWidth = width ? `max-width: ${width}; width: 100%; height: auto;` : '';
+            
+            switch(format) {
+                case 'html':
+                    if (type === 'image') {
+                        if (link) {
+                            code = `<a href="${link}" target="_blank"><img src="${url}" alt="${alt}" style="${styleWidth}"></a>`;
+                        } else {
+                            code = `<img src="${url}" alt="${alt}" style="${styleWidth}">`;
+                        }
+                    } else if (type === 'video') {
+                        code = `<video src="${url}" controls style="${styleWidth}"></video>`;
+                    } else if (type === 'audio') {
+                        code = `<audio src="${url}" controls></audio>`;
+                    } else if (type === 'iframe') {
+                        code = `<iframe src="${url}" style="width: ${width || '100%'}; height: ${width ? 'auto' : '500px'}; border: none;"></iframe>`;
+                    }
+                    break;
+                    
+                case 'markdown':
+                    if (type === 'image') {
+                        if (link) {
+                            code = `[![${alt}](${url})](${link})`;
+                        } else {
+                            code = `![${alt}](${url})`;
+                        }
+                    } else if (type === 'video' || type === 'audio') {
+                        code = `[${alt}](${url})`;
+                    } else if (type === 'iframe') {
+                        code = `[${alt}](${url})`;
+                    }
+                    break;
+                    
+                case 'bbcode':
+                    if (type === 'image') {
+                        if (link) {
+                            code = `[url=${link}][img]${url}[/img][/url]`;
+                        } else {
+                            code = `[img]${url}[/img]`;
+                        }
+                    } else if (type === 'video') {
+                        code = `[video]${url}[/video]`;
+                    } else if (type === 'audio') {
+                        code = `[audio]${url}[/audio]`;
+                    } else if (type === 'iframe') {
+                        code = `[url=${url}]${alt}[/url]`;
+                    }
+                    break;
+                    
+                case 'url':
+                    code = url;
+                    break;
+            }
+            
+            document.getElementById('embedCode').value = code;
+            previewEmbed();
+        }
+
+        function previewEmbed() {
+            const type = document.getElementById('embedType').value;
+            const url = document.getElementById('embedUrl').value.trim();
+            const width = document.getElementById('embedWidth').value.trim();
+            const align = document.getElementById('embedAlign').value;
+            const link = document.getElementById('embedLink').value.trim();
+            const alt = document.getElementById('embedAlt').value.trim();
+            const preview = document.getElementById('embedPreview');
+            
+            if (!url) {
+                preview.innerHTML = '<span style="color: var(--text-muted);">输入 URL 后显示预览</span>';
+                return;
+            }
+            
+            let style = '';
+            if (width) {
+                style = `style="max-width: ${width}; width: 100%; height: auto; ${align !== 'none' ? 'display: block; margin: 0 auto;' : ''}"`;
+            }
+            
+            let html = '';
+            switch(type) {
+                case 'image':
+                    if (link) {
+                        html = `<a href="${link}" target="_blank"><img src="${url}" alt="${alt}" ${style} style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"></a>`;
+                    } else {
+                        html = `<img src="${url}" alt="${alt}" ${style} style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">`;
+                    }
+                    break;
+                case 'video':
+                    html = `<video src="${url}" controls ${style} style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);"></video>`;
+                    break;
+                case 'audio':
+                    html = `<audio src="${url}" controls style="width: 100%;"></audio>`;
+                    break;
+                case 'iframe':
+                    html = `<iframe src="${url}" ${style} style="border-radius: 8px; border: 1px solid var(--border); min-height: 300px;"></iframe>`;
+                    break;
+            }
+            
+            preview.innerHTML = html;
+        }
+
+        function copyEmbedCode() {
+            const code = document.getElementById('embedCode').value;
+            if (!code) {
+                showToast('请先生成嵌入代码', 'error');
+                return;
+            }
+            navigator.clipboard.writeText(code).then(() => {
+                showToast('✅ 代码已复制到剪贴板', 'success');
+            }).catch(() => {
+                showToast('复制失败，请手动选择复制', 'error');
+            });
+        }
+
+        let toolStats = { uses: 0, lastUsed: null };
+        let recentTools = JSON.parse(localStorage.getItem('recentTools') || '[]');
+        let favorites = JSON.parse(localStorage.getItem('toolFavorites') || '[]');
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function updateToolStats(toolName) {
+            toolStats.uses++;
+            toolStats.lastUsed = new Date().toISOString();
+            localStorage.setItem('toolStats', JSON.stringify(toolStats));
+            addToRecentTools(toolName);
+        }
+
+        function addToRecentTools(toolName) {
+            const toolCard = document.querySelector(`.tool-card[onclick*="${toolName}"]`);
+            const toolTitle = toolCard?.querySelector('.tool-card-title')?.textContent || toolName;
+            const toolIcon = toolCard?.querySelector('.tool-card-icon')?.textContent || '🔧';
+
+            recentTools = recentTools.filter(t => t.name !== toolName);
+            recentTools.unshift({ name: toolName, title: toolTitle, icon: toolIcon, time: Date.now() });
+            recentTools = recentTools.slice(0, 5);
+            localStorage.setItem('recentTools', JSON.stringify(recentTools));
+            renderRecentTools();
+        }
+
+        function renderRecentTools() {
+            const container = document.getElementById('recentToolsList');
+            if (!container) return;
+            if (recentTools.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 14px;">暂无最近使用的工具</p>';
+                return;
+            }
+            container.innerHTML = recentTools.map(t => `
+                <div class="recent-tool-item" onclick="showTool('${t.name}')">
+                    <span class="icon">${t.icon}</span>
+                    <span>${t.title}</span>
+                </div>
+            `).join('');
+        }
+
+        function toggleFavorite(toolName, element) {
+            event.stopPropagation();
+            const index = favorites.indexOf(toolName);
+            if (index === -1) {
+                favorites.push(toolName);
+                element.classList.add('active');
+                element.innerHTML = '⭐';
+                showToast('已添加到收藏', 'success');
+            } else {
+                favorites.splice(index, 1);
+                element.classList.remove('active');
+                element.innerHTML = '☆';
+                showToast('已取消收藏', 'info');
+            }
+            localStorage.setItem('toolFavorites', JSON.stringify(favorites));
+        }
+
+        function renderFavorites() {
+            document.querySelectorAll('.tool-favorite').forEach(el => {
+                const toolName = el.closest('.tool-card')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+                if (favorites.includes(toolName)) {
+                    el.classList.add('active');
+                    el.innerHTML = '⭐';
+                }
+            });
+        }
+
+        function searchTools(query) {
+            const cards = document.querySelectorAll('.tool-card');
+            const lowerQuery = query.toLowerCase();
+            cards.forEach(card => {
+                const title = card.querySelector('.tool-card-title')?.textContent?.toLowerCase() || '';
+                const desc = card.querySelector('.tool-card-description')?.textContent?.toLowerCase() || '';
+                const matches = title.includes(lowerQuery) || desc.includes(lowerQuery);
+                card.style.display = matches ? '' : 'none';
+            });
+        }
+
+        function loadUsageStats() {
+            const stats = JSON.parse(localStorage.getItem('toolStats') || '{}');
+            document.getElementById('totalUses').textContent = stats.uses || 0;
+            if (stats.lastUsed) {
+                const date = new Date(stats.lastUsed);
+                document.getElementById('lastUse').textContent = date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN');
+            }
+        }
+
+        function showLoading(element) {
+            const originalContent = element.innerHTML;
+            element.dataset.originalContent = originalContent;
+            element.innerHTML = '<span class="loading-spinner"></span> 处理中...';
+            element.disabled = true;
+            return () => {
+                element.innerHTML = originalContent;
+                element.disabled = false;
+            };
+        }
+
+        let imageTool = {
+            currentImage: null,
+            mode: 'info',
+
+            init: function() {
+                document.getElementById('imageUpload').addEventListener('change', (e) => this.handleUpload(e));
+                document.getElementById('resizeWidth').addEventListener('input', (e) => {
+                    if (document.getElementById('maintainRatio').checked) {
+                        const ratio = e.target.value / (this.info?.width || 1);
+                        document.getElementById('resizeHeight').value = Math.round((this.info?.height || 1) * ratio);
+                    }
+                });
+                document.getElementById('compressQuality').addEventListener('input', (e) => {
+                    document.getElementById('qualityValue').textContent = e.target.value + '%';
+                });
+            },
+
+            handleUpload: function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    this.currentImage = event.target.result;
+                    document.getElementById('imagePreview').innerHTML = `<img src="${this.currentImage}" style="max-width: 100%; max-height: 300px; border-radius: 8px;">`;
+                    document.getElementById('uploadArea').style.display = 'none';
+                    document.getElementById('imageActions').style.display = 'flex';
+                    this.loadImageInfo();
+                };
+                reader.readAsDataURL(file);
+            },
+
+            loadImageInfo: function() {
+                if (!this.currentImage) return;
+                apiCall('/api/image/info', { method: 'POST', body: JSON.stringify({ image: this.currentImage }) }).then(res => {
+                    if (res.success) {
+                        this.info = res.data;
+                        document.getElementById('imageInfo').innerHTML = `
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                                <div style="padding: 12px; background: var(--bg-dark); border-radius: 8px;">
+                                    <div style="font-size: 12px; color: var(--text-muted);">尺寸</div>
+                                    <div style="font-weight: 600;">${res.data.width} × ${res.data.height}</div>
+                                </div>
+                                <div style="padding: 12px; background: var(--bg-dark); border-radius: 8px;">
+                                    <div style="font-size: 12px; color: var(--text-muted);">格式</div>
+                                    <div style="font-weight: 600;">${res.data.format || 'Unknown'}</div>
+                                </div>
+                                <div style="padding: 12px; background: var(--bg-dark); border-radius: 8px;">
+                                    <div style="font-size: 12px; color: var(--text-muted);">大小</div>
+                                    <div style="font-weight: 600;">${res.data.size_readable}</div>
+                                </div>
+                                <div style="padding: 12px; background: var(--bg-dark); border-radius: 8px;">
+                                    <div style="font-size: 12px; color: var(--text-muted);">颜色模式</div>
+                                    <div style="font-weight: 600;">${res.data.mode}</div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            },
+
+            resize: function() {
+                if (!this.currentImage) return;
+                const width = parseInt(document.getElementById('resizeWidth').value) || 800;
+                const height = parseInt(document.getElementById('resizeHeight').value) || 600;
+                const maintainRatio = document.getElementById('maintainRatio').checked;
+
+                apiCall('/api/image/resize', { method: 'POST', body: JSON.stringify({
+                    image: this.currentImage,
+                    width,
+                    height: maintainRatio ? null : height,
+                    maintain_ratio: maintainRatio
+                }) }).then(res => {
+                    if (res.success) {
+                        this.showResult(res.data, `调整为 ${res.data.width}×${res.data.height}`);
+                    }
+                });
+            },
+
+            compress: function() {
+                if (!this.currentImage) return;
+                const quality = parseInt(document.getElementById('compressQuality').value) || 80;
+                const maxSize = parseInt(document.getElementById('maxSize').value) || 1920;
+
+                apiCall('/api/image/compress', { method: 'POST', body: JSON.stringify({
+                    image: this.currentImage,
+                    quality,
+                    max_size: maxSize
+                }) }).then(res => {
+                    if (res.success) {
+                        this.showResult(res.data, `压缩率: ${res.data.compression_ratio}`);
+                    }
+                });
+            },
+
+            convert: function() {
+                if (!this.currentImage) return;
+                const format = document.getElementById('targetFormat').value;
+
+                apiCall('/api/image/convert', { method: 'POST', body: JSON.stringify({
+                    image: this.currentImage,
+                    format
+                }) }).then(res => {
+                    if (res.success) {
+                        this.showResult(res.data, `转换为 ${res.data.target_format} 格式`);
+                    }
+                });
+            },
+
+            watermark: function() {
+                if (!this.currentImage) return;
+                const text = document.getElementById('watermarkText').value || 'RAILGUN';
+                const position = document.getElementById('watermarkPosition').value;
+
+                apiCall('/api/image/watermark', { method: 'POST', body: JSON.stringify({
+                    image: this.currentImage,
+                    text,
+                    position
+                }) }).then(res => {
+                    if (res.success) {
+                        this.showResult(res.data, `添加水印: "${res.data.watermark_text}"`);
+                    }
+                });
+            },
+
+            showResult: function(data, message) {
+                document.getElementById('imageResult').innerHTML = `
+                    <div style="text-align: center; margin-bottom: 16px;">
+                        <img src="${data.image}" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 2px solid var(--primary);">
+                    </div>
+                    <div style="padding: 12px; background: var(--bg-dark); border-radius: 8px; text-align: center;">
+                        <div style="color: var(--success); font-weight: 600;">✅ ${message}</div>
+                        <a href="${data.image}" download="processed_image.png" class="btn btn-primary" style="margin-top: 12px;">📥 下载图片</a>
+                    </div>
+                `;
+            },
+
+            reset: function() {
+                this.currentImage = null;
+                this.info = null;
+                document.getElementById('imageUpload').value = '';
+                document.getElementById('imagePreview').innerHTML = '';
+                document.getElementById('uploadArea').style.display = 'block';
+                document.getElementById('imageActions').style.display = 'none';
+                document.getElementById('imageInfo').innerHTML = '';
+                document.getElementById('imageResult').innerHTML = '';
+            }
+        };
+    </script>
+</body>
+</html>

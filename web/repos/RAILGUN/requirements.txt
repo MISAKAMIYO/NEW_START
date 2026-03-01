@@ -1,0 +1,8 @@
+PyQt5
+requests
+beautifulsoup4
+pygame
+openai
+pyautogui
+httpx
+python-vlc
