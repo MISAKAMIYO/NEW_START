@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>社区论坛 - RAILGUN</title>
+    <link rel="stylesheet" href="css/forum.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">💬</span>
+                <span class="logo-text">社区论坛</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="active">首页</a>
+                <a href="new.html">发布帖子</a>
+                <a href="login.html" id="loginLink">登录</a>
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <span id="usernameDisplay"></span>
+                    <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                </div>
+            </div>
+            <div class="search-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="text" id="searchInput" placeholder="搜索帖子..." onkeypress="handleSearch(event)">
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="forum-grid">
+                <aside class="sidebar">
+                    <div class="sidebar-card">
+                        <h3 class="sidebar-title">📂 版块分类</h3>
+                        <ul class="category-list" id="categoryList">
+                            <li class="category-item active" data-category="all">
+                                <span class="icon">📋</span>
+                                <span class="name">全部</span>
+                                <span class="count" id="count-all">0</span>
+                            </li>
+                            <li class="category-item" data-category="general">
+                                <span class="icon">💬</span>
+                                <span class="name">综合</span>
+                                <span class="count" id="count-general">0</span>
+                            </li>
+                            <li class="category-item" data-category="suggestion">
+                                <span class="icon">💡</span>
+                                <span class="name">建议反馈</span>
+                                <span class="count" id="count-suggestion">0</span>
+                            </li>
+                            <li class="category-item" data-category="bug">
+                                <span class="icon">🐛</span>
+                                <span class="name">Bug反馈</span>
+                                <span class="count" id="count-bug">0</span>
+                            </li>
+                            <li class="category-item" data-category="discussion">
+                                <span class="icon">💻</span>
+                                <span class="name">技术讨论</span>
+                                <span class="count" id="count-discussion">0</span>
+                            </li>
+                            <li class="category-item" data-category="chat">
+                                <span class="icon">☕</span>
+                                <span class="name">闲聊灌水</span>
+                                <span class="count" id="count-chat">0</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="sidebar-card">
+                        <h3 class="sidebar-title">📊 论坛统计</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="total-posts">0</div>
+                                <div class="stat-label">总帖子</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="total-replies">0</div>
+                                <div class="stat-label">总回复</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="today-posts">0</div>
+                                <div class="stat-label">今日</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="online-count">0</div>
+                                <div class="stat-label">在线</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="new.html" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        发布新帖子
+                    </a>
+                </aside>
+
+                <div class="main-area">
+                    <div class="forum-header">
+                        <h1 class="forum-title" id="forumTitle">全部帖子</h1>
+                        <div class="sort-tabs">
+                            <button class="sort-tab active" data-sort="latest" onclick="changeSort('latest')">最新</button>
+                            <button class="sort-tab" data-sort="popular" onclick="changeSort('popular')">热门</button>
+                            <button class="sort-tab" data-sort="replies" onclick="changeSort('replies')">回复</button>
+                        </div>
+                    </div>
+
+                    <div class="posts-list" id="postsList">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+
+                    <div class="pagination" id="pagination" style="display: none;">
+                        <button class="page-btn" id="prevBtn" onclick="changePage(-1)">上一页</button>
+                        <span class="page-info" id="pageInfo">1 / 1</span>
+                        <button class="page-btn" id="nextBtn" onclick="changePage(1)">下一页</button>
+                    </div>
+
+                    <div class="empty-state" id="emptyState" style="display: none;">
+                        <div class="empty-icon">📭</div>
+                        <div class="empty-title">暂无帖子</div>
+                        <div class="empty-desc">成为第一个发帖的人吧！</div>
+                        <a href="new.html" class="btn btn-primary">发布帖子</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p class="footer-text">© 2025 RAILGUN Forum. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="#">关于我们</a>
+                    <a href="#">使用条款</a>
+                    <a href="#">隐私政策</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="js/forum.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            ForumApp.init();
+        });
+    </script>
+</body>
+</html>
