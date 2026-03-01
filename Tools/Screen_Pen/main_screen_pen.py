@@ -1,6 +1,6 @@
 """
-希沃白板 - 全屏透明遮罩模式
-覆盖整个桌面的透明白板，所有操作都在遮罩上进行
+专业屏幕画笔工具
+半透明覆盖，可看到桌面内容
 """
 
 import sys
@@ -8,416 +8,539 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
-                              QLabel, QSlider, QColorDialog, QFrame, QButtonGroup,
-                              QApplication, QDialog, QDesktopWidget)
-from PyQt5.QtCore import Qt, QPoint, QPointF, pyqtSignal, QTimer
-from PyQt5.QtGui import (QPainter, QColor, QPen, QPixmap, QCursor, 
-                          QFont, QPainterPath)
+                              QLabel, QSlider, QColorDialog, QFrame, QApplication, 
+                              QDesktopWidget)
+from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QTimer
+from PyQt5.QtGui import QPainter, QColor, QPen, QPixmap, QCursor
 
 
-class DrawingCanvas(QWidget):
-    """绘图画布"""
+class ModernToolbar(QWidget):
+    """独立悬浮工具栏"""
     
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, canvas=None):
+        super().__init__()
+        self.canvas = canvas
+        self.dragging = False
+        self.drag_position = QPoint()
+        self.current_color = QColor("#FF3B30")
+        self.current_tool = "pen"
+        self.current_size = 5
+        
+        self.setup_ui()
+        
+    def setup_ui(self):
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setAttribute(Qt.WA_NoSystemBackground)
+        
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        
+        container = QWidget()
+        container.setStyleSheet("""
+            QWidget {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #1a1a2e, stop:1 #16213e);
+                border-radius: 16px;
+            }
+        """)
+        
+        layout = QHBoxLayout()
+        layout.setContentsMargins(16, 12, 16, 12)
+        layout.setSpacing(10)
+        
+        tools_group = QHBoxLayout()
+        tools_group.setSpacing(6)
+        
+        self.tool_btns = {}
+        tools = [
+            ("pen", "✏️", "画笔"),
+            ("marker", "🖊️", "马克笔"),
+            ("highlighter", "🖍️", "荧光笔"),
+            ("eraser", "🧹", "橡皮"),
+        ]
+        
+        for tool_id, icon, tip in tools:
+            btn = self.create_tool_btn(icon, tip)
+            btn.clicked.connect(lambda checked, t=tool_id: self.select_tool(t))
+            self.tool_btns[tool_id] = btn
+            tools_group.addWidget(btn)
+        
+        layout.addLayout(tools_group)
+        layout.addWidget(self.create_separator())
+        
+        self.color_palette = self.create_color_palette()
+        layout.addLayout(self.color_palette)
+        
+        layout.addWidget(self.create_separator())
+        
+        size_layout = QVBoxLayout()
+        size_layout.setSpacing(4)
+        size_label = QLabel("粗细")
+        size_label.setStyleSheet("color: #aaa; font-size: 10px;")
+        size_label.setAlignment(Qt.AlignCenter)
+        size_layout.addWidget(size_label)
+        
+        self.size_slider = QSlider(Qt.Horizontal)
+        self.size_slider.setMinimum(1)
+        self.size_slider.setMaximum(20)
+        self.size_slider.setValue(5)
+        self.size_slider.setFixedWidth(80)
+        self.size_slider.setStyleSheet(self.get_slider_style())
+        size_layout.addWidget(self.size_slider)
+        
+        layout.addLayout(size_layout)
+        layout.addWidget(self.create_separator())
+        
+        action_layout = QHBoxLayout()
+        action_layout.setSpacing(6)
+        
+        self.undo_btn = self.create_action_btn("↩️", "撤销")
+        self.undo_btn.clicked.connect(lambda: self.action_triggered.emit("undo"))
+        action_layout.addWidget(self.undo_btn)
+        
+        self.clear_btn = self.create_action_btn("🗑️", "清空")
+        self.clear_btn.clicked.connect(lambda: self.action_triggered.emit("clear"))
+        action_layout.addWidget(self.clear_btn)
+        
+        self.save_btn = self.create_action_btn("💾", "保存")
+        self.save_btn.clicked.connect(lambda: self.action_triggered.emit("save"))
+        action_layout.addWidget(self.save_btn)
+        
+        layout.addLayout(action_layout)
+        layout.addWidget(self.create_separator())
+        
+        self.close_btn = self.create_action_btn("✕", "关闭")
+        self.close_btn.setStyleSheet("""
+            QPushButton {
+                background: #FF3B30;
+                border-radius: 8px;
+            }
+            QPushButton:hover {
+                background: #FF534A;
+            }
+        """)
+        self.close_btn.clicked.connect(lambda: self.action_triggered.emit("close"))
+        layout.addWidget(self.close_btn)
+        
+        container.setLayout(layout)
+        main_layout.addWidget(container)
+        self.setLayout(main_layout)
+        
+        self.size_slider.valueChanged.connect(self.on_size_changed)
+        
+        self.select_tool("pen")
+        self.update_color_display()
+        
+    def create_tool_btn(self, icon, tip):
+        btn = QPushButton(icon)
+        btn.setFixedSize(40, 40)
+        btn.setToolTip(tip)
+        btn.setCursor(Qt.PointingHandCursor)
+        btn.setStyleSheet("""
+            QPushButton {
+                background: rgba(255, 255, 255, 0.05);
+                border: 2px solid rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                font-size: 18px;
+            }
+            QPushButton:hover {
+                background: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+            QPushButton:checked {
+                background: rgba(59, 130, 246, 0.3);
+                border-color: #3B82F6;
+            }
+        """)
+        btn.setCheckable(True)
+        return btn
+    
+    def create_action_btn(self, icon, tip):
+        btn = QPushButton(icon)
+        btn.setFixedSize(40, 40)
+        btn.setToolTip(tip)
+        btn.setCursor(Qt.PointingHandCursor)
+        btn.setStyleSheet("""
+            QPushButton {
+                background: rgba(255, 255, 255, 0.05);
+                border: 2px solid rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+        """)
+        return btn
+    
+    def create_separator(self):
+        line = QFrame()
+        line.setFrameShape(QFrame.VLine)
+        line.setStyleSheet("background: rgba(255, 255, 255, 0.1);")
+        line.setFixedWidth(1)
+        return line
+    
+    def create_color_palette(self):
+        layout = QHBoxLayout()
+        layout.setSpacing(4)
+        
+        self.color_btns = []
+        colors = [
+            "#FF3B30", "#FF9500", "#FFCC00", "#4CD964",
+            "#5AC8FA", "#007AFF", "#5856D6", "#FF2D55",
+            "#FFFFFF", "#8E8E93"
+        ]
+        
+        for color in colors:
+            btn = QPushButton()
+            btn.setFixedSize(24, 24)
+            btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: {color};
+                    border: 2px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 12px;
+                }}
+                QPushButton:hover {{
+                    border-color: white;
+                }}
+            """)
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.clicked.connect(lambda checked, c=color: self.select_color(c))
+            layout.addWidget(btn)
+            self.color_btns.append((btn, color))
+        
+        custom_btn = QPushButton("🎨")
+        custom_btn.setFixedSize(24, 24)
+        custom_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 red, stop:0.5 green, stop:1 blue);
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-radius: 12px;
+                font-size: 12px;
+            }
+        """)
+        custom_btn.setCursor(Qt.PointingHandCursor)
+        custom_btn.clicked.connect(self.choose_custom_color)
+        layout.addWidget(custom_btn)
+        
+        return layout
+    
+    def get_slider_style(self):
+        return """
+            QSlider::groove:horizontal {
+                height: 6px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 3px;
+            }
+            QSlider::handle:horizontal {
+                background: #3B82F6;
+                width: 16px;
+                margin: -5px 0;
+                border-radius: 8px;
+            }
+            QSlider::handle:horizontal:hover {
+                background: #60A5FA;
+            }
+        """
+    
+    def on_size_changed(self, value):
+        self.current_size = value
+        self.size_changed.emit(value)
+        if self.canvas:
+            self.canvas.set_pen(self.current_color, value)
+    
+    def select_tool(self, tool):
+        self.current_tool = tool
+        for tool_id, btn in self.tool_btns.items():
+            btn.setChecked(tool_id == tool)
+        self.tool_selected.emit(tool)
+        
+        if self.canvas:
+            self.canvas.set_tool(tool)
+    
+    def select_color(self, color):
+        self.current_color = QColor(color)
+        self.color_changed.emit(self.current_color)
+        self.update_color_display()
+        
+        if self.canvas:
+            self.canvas.set_pen(self.current_color, self.current_size)
+    
+    def choose_custom_color(self):
+        color = QColorDialog.getColor(self.current_color, self, "选择颜色")
+        if color.isValid():
+            self.current_color = color
+            self.color_changed.emit(color)
+            self.update_color_display()
+            
+            if self.canvas:
+                self.canvas.set_pen(self.current_color, self.current_size)
+    
+    def update_color_display(self):
+        for btn, color in self.color_btns:
+            is_selected = QColor(color) == self.current_color
+            btn.setStyleSheet(f"""
+                QPushButton {{
+                    background: {color};
+                    border: 3px solid {'white' if is_selected else 'rgba(255, 255, 255, 0.3)'};
+                    border-radius: 12px;
+                }}
+                QPushButton:hover {{
+                    border-color: white;
+                }}
+            """)
+    
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.dragging = True
+            self.drag_position = event.globalPos() - self.pos()
+    
+    def mouseMoveEvent(self, event):
+        if self.dragging and event.buttons() & Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_position)
+    
+    def mouseReleaseEvent(self, event):
+        self.dragging = False
+    
+    tool_selected = pyqtSignal(str)
+    color_changed = pyqtSignal(QColor)
+    size_changed = pyqtSignal(int)
+    action_triggered = pyqtSignal(str)
+
+
+class TranslucentCanvas(QWidget):
+    """半透明画布 - 可看到桌面"""
+    
+    def __init__(self):
+        super().__init__()
+        
+        desktop = QDesktopWidget()
+        screen = desktop.availableGeometry(desktop.primaryScreen())
+        
+        # 关键：使用半透明背景 + 窗口置顶
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setGeometry(screen)
         
         self.drawing = False
-        self.last_point = QPoint()
-        self.pen_color = QColor(255, 0, 0)
-        self.pen_width = 3
-        self.current_tool = 'pen'
-        
         self.paths = []
-        self.current_path = QPainterPath()
+        self.current_path = []
+        
+        self.pen_color = QColor("#FF3B30")
+        self.pen_size = 5
+        self.current_tool = "pen"
         
         self.setMouseTracking(True)
-        self.update_cursor()
+        
+        self.tip_label = QLabel("✏️ 画笔 | 红色 | 粗细 5", self)
+        self.tip_label.setStyleSheet("""
+            QLabel {
+                color: white;
+                background: rgba(0, 0, 0, 150);
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 13px;
+            }
+        """)
+        self.tip_label.adjustSize()
+        self.tip_label.move(screen.width() // 2 - self.tip_label.width() // 2, screen.height() - 60)
+        self.tip_label.show()
+        
+        QTimer.singleShot(5000, lambda: self.tip_label.setText("按 ESC 退出 | Ctrl+Z 撤销 | C 清空 | S 保存"))
+        QTimer.singleShot(8000, self.tip_label.hide)
     
-    def update_cursor(self):
-        if self.current_tool == 'eraser':
-            self.setCursor(QCursor(Qt.SizeAllCursor))
-        else:
-            self.setCursor(QCursor(Qt.CrossCursor))
+    def set_pen(self, color, size):
+        self.pen_color = QColor(color)
+        self.pen_size = size
+        self.update_tip()
     
     def set_tool(self, tool):
         self.current_tool = tool
-        self.update_cursor()
+        if tool == "eraser":
+            self.setCursor(QCursor(Qt.OpenHandCursor))
+        else:
+            self.setCursor(QCursor(Qt.CrossCursor))
+        self.update_tip()
     
-    def set_pen_color(self, color):
-        self.pen_color = QColor(color)
-    
-    def set_pen_width(self, width):
-        self.pen_width = width
+    def update_tip(self):
+        tool_names = {
+            "pen": "✏️ 画笔",
+            "marker": "🖊️ 马克笔",
+            "highlighter": "🖍️ 荧光笔",
+            "eraser": "🧹 橡皮"
+        }
+        tip = f"{tool_names.get(self.current_tool, '✏️')} | {self.pen_color.name()} | 粗细 {self.pen_size}"
+        self.tip_label.setText(tip)
+        self.tip_label.adjustSize()
     
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setRenderHint(QPainter.SmoothPixmapTransform)
-        
-        painter.eraseRect(self.rect())
         
         for path_data in self.paths:
-            path, color, width, tool = path_data
-            pen = QPen(color, width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
-            if tool == 'eraser':
-                pen.setColor(Qt.white)
-                pen.setWidth(25)
-            elif tool == 'highlighter':
-                pen.setColor(QColor(255, 255, 0, 80))
-                pen.setWidth(25)
-            painter.setPen(pen)
-            painter.drawPath(path)
+            self.draw_path(painter, path_data)
         
-        if self.drawing and not self.current_path.isEmpty():
-            pen = QPen(self.pen_color, self.pen_width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
-            if self.current_tool == 'eraser':
-                pen.setColor(Qt.white)
-                pen.setWidth(25)
-            elif self.current_tool == 'highlighter':
-                pen.setColor(QColor(255, 255, 0, 80))
-                pen.setWidth(25)
+        if self.current_path:
+            self.draw_path(painter, self.current_path)
+    
+    def draw_path(self, painter, path_data):
+        if len(path_data) < 4:
+            return
+        
+        points = path_data[:-3]
+        color = path_data[-3]
+        size = path_data[-2]
+        tool = path_data[-1]
+        
+        if tool == "pen":
+            pen = QPen(color, size, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
             painter.setPen(pen)
-            painter.drawPath(self.current_path)
+        elif tool == "marker":
+            c = QColor(color)
+            c.setAlpha(180)
+            pen = QPen(c, size * 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+            painter.setPen(pen)
+        elif tool == "highlighter":
+            pen = QPen(QColor(255, 255, 0, 80), 20, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+            painter.setPen(pen)
+        elif tool == "eraser":
+            pen = QPen(QColor(0, 0, 0, 0), 30, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+            painter.setCompositionMode(QPainter.CompositionMode_DestinationOut)
+            painter.setPen(pen)
+        
+        for i in range(len(points) - 1):
+            painter.drawLine(points[i], points[i + 1])
+        
+        if tool == "eraser":
+            painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
     
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.drawing = True
-            self.last_point = event.pos()
-            self.current_path = QPainterPath()
-            self.current_path.moveTo(event.pos())
-            self.update()
+            self.current_path = [event.pos(), QColor(self.pen_color), int(self.pen_size), self.current_tool]
     
     def mouseMoveEvent(self, event):
-        if event.buttons() & Qt.LeftButton and self.drawing:
-            self.current_path.lineTo(event.pos())
+        if self.drawing and event.buttons() & Qt.LeftButton:
+            self.current_path.insert(-3, event.pos())
             self.update()
-        elif self.current_tool == 'eraser':
-            self.setCursor(QCursor(Qt.CrossCursor))
     
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton and self.drawing:
+        if self.drawing:
             self.drawing = False
-            if not self.current_path.isEmpty():
-                self.paths.append((QPainterPath(self.current_path), 
-                                   QColor(self.pen_color), 
-                                   self.pen_width, 
-                                   self.current_tool))
-            self.current_path = QPainterPath()
+            if len(self.current_path) >= 4:
+                self.paths.append(self.current_path)
+            self.current_path = []
             self.update()
-    
-    def clear(self):
-        self.paths.clear()
-        self.current_path = QPainterPath()
-        self.update()
     
     def undo(self):
         if self.paths:
             self.paths.pop()
             self.update()
-
-
-class WhiteboardToolbar(QWidget):
-    """工具栏"""
     
-    tool_selected = pyqtSignal(str)
-    color_changed = pyqtSignal(QColor)
-    width_changed = pyqtSignal(int)
-    undo_signal = pyqtSignal()
-    clear_signal = pyqtSignal()
-    save_signal = pyqtSignal()
-    close_signal = pyqtSignal()
+    def clear(self):
+        self.paths.clear()
+        self.current_path = []
+        self.update()
     
-    def __init__(self):
-        super().__init__()
-        self.dragging = False
-        self.drag_position = QPoint()
-        self.current_color = QColor(255, 0, 0)
-        self.setup_ui()
+    def get_pixmap(self):
+        pixmap = QPixmap(self.size())
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        for path_data in self.paths:
+            self.draw_path(painter, path_data)
+        
+        return pixmap
     
-    def setup_ui(self):
-        self.setFixedHeight(48)
-        self.setMinimumWidth(380)
-        
-        desktop = QDesktopWidget()
-        screen_rect = desktop.screenGeometry()
-        self.move(100, 100)
-        
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
-        
-        layout = QHBoxLayout()
-        layout.setContentsMargins(12, 4, 12, 4)
-        layout.setSpacing(6)
-        
-        self.tool_buttons = {}
-        
-        tools = [
-            ("✏", "pen", "画笔"),
-            ("🖍", "highlighter", "荧光笔"),
-            ("🧹", "eraser", "橡皮"),
-        ]
-        
-        for icon, tool_id, tip in tools:
-            btn = QPushButton(icon)
-            btn.setToolTip(tip)
-            btn.setCheckable(True)
-            btn.setChecked(tool_id == "pen")
-            btn.clicked.connect(lambda checked, t=tool_id, b=btn: self.on_tool_clicked(t, b))
-            self.tool_buttons[tool_id] = btn
-            layout.addWidget(btn)
-        
-        layout.addWidget(self.create_separator())
-        
-        shapes = [
-            ("➖", "line", "直线"),
-            ("⬜", "rect", "矩形"),
-            ("⭕", "circle", "椭圆"),
-        ]
-        
-        for icon, shape_id, tip in shapes:
-            btn = QPushButton(icon)
-            btn.setToolTip(tip)
-            btn.setCheckable(True)
-            btn.clicked.connect(lambda checked, s=shape_id, b=btn: self.on_tool_clicked(s, b))
-            self.tool_buttons[shape_id] = btn
-            layout.addWidget(btn)
-        
-        layout.addWidget(self.create_separator())
-        
-        self.color_btn = QPushButton("🎨")
-        self.color_btn.setFixedSize(32, 32)
-        self.update_color_btn()
-        layout.addWidget(self.color_btn)
-        
-        layout.addWidget(QLabel("粗"))
-        
-        self.width_slider = QSlider(Qt.Horizontal)
-        self.width_slider.setMinimum(1)
-        self.width_slider.setMaximum(15)
-        self.width_slider.setValue(3)
-        self.width_slider.setFixedWidth(60)
-        layout.addWidget(self.width_slider)
-        
-        layout.addWidget(self.create_separator())
-        
-        self.undo_btn = QPushButton("↩")
-        self.undo_btn.setFixedSize(32, 32)
-        layout.addWidget(self.undo_btn)
-        
-        self.clear_btn = QPushButton("🗑")
-        self.clear_btn.setFixedSize(32, 32)
-        layout.addWidget(self.clear_btn)
-        
-        self.save_btn = QPushButton("💾")
-        self.save_btn.setFixedSize(32, 32)
-        layout.addWidget(self.save_btn)
-        
-        layout.addStretch()
-        
-        self.close_btn = QPushButton("✕")
-        self.close_btn.setFixedSize(32, 32)
-        layout.addWidget(self.close_btn)
-        
-        self.setLayout(layout)
-        
-        self.color_btn.clicked.connect(self.choose_color)
-        self.width_slider.valueChanged.connect(self.on_width_changed)
-        self.undo_btn.clicked.connect(self.undo_signal)
-        self.clear_btn.clicked.connect(self.clear_signal)
-        self.save_btn.clicked.connect(self.save_signal)
-        self.close_btn.clicked.connect(self.close_signal)
-        
-        self.setStyleSheet("""
-            QWidget {
-                background-color: rgba(30, 30, 40, 230);
-                border-radius: 10px;
-            }
-            QPushButton {
-                background-color: rgba(60, 60, 80, 200);
-                color: white;
-                border: 1px solid rgba(100, 100, 120, 180);
-                border-radius: 6px;
-                padding: 4px 8px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: rgba(80, 80, 100, 220);
-            }
-            QPushButton:checked {
-                background-color: rgba(99, 102, 241, 200);
-            }
-            QLabel {
-                color: rgba(200, 200, 210, 230);
-                font-size: 11px;
-            }
-        """)
-    
-    def create_separator(self):
-        frame = QFrame()
-        frame.setFrameShape(QFrame.VLine)
-        frame.setStyleSheet("color: rgba(100, 100, 120, 150);")
-        frame.setFixedWidth(1)
-        return frame
-    
-    def on_tool_clicked(self, tool_id, button):
-        for tid, btn in self.tool_buttons.items():
-            if tid in ['pen', 'highlighter', 'eraser', 'line', 'rect', 'circle']:
-                btn.setChecked(btn == button)
-        self.tool_selected.emit(tool_id)
-    
-    def choose_color(self):
-        color = QColorDialog.getColor(self.current_color, self, "选择颜色")
-        if color.isValid():
-            self.current_color = color
-            self.update_color_btn()
-            self.color_changed.emit(color)
-    
-    def update_color_btn(self):
-        self.color_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.current_color.name()};
-                border: 2px solid white;
-                border-radius: 6px;
-            }}
-        """)
-    
-    def on_width_changed(self, value):
-        self.width_changed.emit(value)
-    
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.dragging = True
-            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
-            event.accept()
-    
-    def mouseMoveEvent(self, event):
-        if event.buttons() & Qt.LeftButton and self.dragging:
-            self.move(event.globalPos() - self.drag_position)
-            event.accept()
-    
-    def mouseReleaseEvent(self, event):
-        self.dragging = False
-
-
-class WhiteboardWindow(QWidget):
-    """白板主窗口"""
-    
-    def __init__(self):
-        super().__init__()
-        self.setup_ui()
-    
-    def setup_ui(self):
-        self.setWindowTitle("希沃白板")
-        
-        desktop = QDesktopWidget()
-        screen_rect = desktop.availableGeometry(desktop.primaryScreen())
-        self.setGeometry(screen_rect)
-        
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
-        self.setAttribute(Qt.WA_NoSystemBackground, True)
-        
-        self.canvas = DrawingCanvas(self)
-        self.canvas.setGeometry(screen_rect)
-        
-        self.toolbar = WhiteboardToolbar()
-        self.toolbar.show()
-        
-        self.status_label = QLabel("💡 拖动工具栏到任意位置 | 左键绘制 | ESC退出", self)
-        self.status_label.setGeometry(
-            screen_rect.width() // 2 - 160,
-            screen_rect.height() - 50,
-            320, 26
-        )
-        self.status_label.setAlignment(Qt.AlignCenter)
-        self.status_label.setStyleSheet("""
-            QLabel {
-                color: white;
-                font-size: 12px;
-                background-color: rgba(30, 30, 40, 180);
-                border-radius: 13px;
-            }
-        """)
-        self.status_label.show()
-        
-        self.toolbar.tool_selected.connect(self.canvas.set_tool)
-        self.toolbar.color_changed.connect(self.canvas.set_pen_color)
-        self.toolbar.width_changed.connect(self.canvas.set_pen_width)
-        self.toolbar.undo_signal.connect(self.canvas.undo)
-        self.toolbar.clear_signal.connect(self.canvas.clear)
-        self.toolbar.save_signal.connect(self.save_canvas)
-        self.toolbar.close_signal.connect(self.close)
-        
-        self.setStyleSheet("background: transparent;")
+    def show_tip(self, text):
+        self.tip_label.setText(text)
+        self.tip_label.show()
+        QTimer.singleShot(2000, self.tip_label.hide)
     
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.close()
+        elif event.key() == Qt.Key_C and not event.modifiers():
+            self.clear()
         elif event.key() == Qt.Key_S and event.modifiers() & Qt.ControlModifier:
             self.save_canvas()
-        super().keyPressEvent(event)
-    
-    def closeEvent(self, event):
-        self.toolbar.close()
-        super().closeEvent(event)
+        elif event.key() == Qt.Key_Z and event.modifiers() & Qt.ControlModifier:
+            self.undo()
     
     def save_canvas(self):
         from PyQt5.QtWidgets import QFileDialog
         from datetime import datetime
         
-        desktop = QDesktopWidget()
-        screen_rect = desktop.availableGeometry(desktop.primaryScreen())
+        pixmap = self.get_pixmap()
         
-        pixmap = QPixmap(screen_rect.size())
-        pixmap.fill(Qt.transparent)
-        
-        painter = QPainter(pixmap)
-        painter.setRenderHint(QPainter.Antialiasing)
-        
-        for path_data in self.canvas.paths:
-            path, color, width, tool = path_data
-            pen = QPen(color, width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
-            if tool == 'eraser':
-                pen.setColor(Qt.white)
-                pen.setWidth(25)
-            elif tool == 'highlighter':
-                pen.setColor(QColor(255, 255, 0, 80))
-                pen.setWidth(25)
-            painter.setPen(pen)
-            painter.drawPath(path)
-        
-        painter.end()
-        
-        default_name = f"白板_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+        default_name = f"屏幕画笔_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         filepath, _ = QFileDialog.getSaveFileName(
-            self, "保存白板", default_name, "PNG图片 (*.png)"
+            self, "保存图片", default_name, "PNG 图片 (*.png)"
         )
         
         if filepath:
             pixmap.save(filepath)
-            self.status_label.setText(f"✓ 已保存: {os.path.basename(filepath)}")
-            QTimer.singleShot(2000, lambda: 
-                self.status_label.setText("💡 拖动工具栏到任意位置 | 左键绘制 | ESC退出")
-            )
+            self.show_tip(f"✓ 已保存：{os.path.basename(filepath)}")
+
+
+class ScreenPenApp:
+    """屏幕画笔应用管理器"""
     
-    def showEvent(self, event):
-        super().showEvent(event)
-        self.activateWindow()
-        self.raise_()
+    def __init__(self):
+        self.app = QApplication(sys.argv)
+        self.app.setStyle('Fusion')
+        
+        self.canvas = TranslucentCanvas()
+        self.toolbar = ModernToolbar(self.canvas)
+        
+        self.connect_signals()
+        
+    def connect_signals(self):
+        self.toolbar.tool_selected.connect(self.canvas.set_tool)
+        self.toolbar.color_changed.connect(lambda c: self.canvas.set_pen(c, self.toolbar.current_size))
+        self.toolbar.size_changed.connect(lambda s: self.canvas.set_pen(self.toolbar.current_color, s))
+        self.toolbar.action_triggered.connect(self.handle_action)
+    
+    def handle_action(self, action):
+        if action == "undo":
+            self.canvas.undo()
+        elif action == "clear":
+            self.canvas.clear()
+        elif action == "save":
+            self.canvas.save_canvas()
+        elif action == "close":
+            self.close()
+    
+    def show(self):
+        self.canvas.show()
+        self.canvas.raise_()
+        self.canvas.activateWindow()
+        
+        desktop = QDesktopWidget()
+        screen = desktop.availableGeometry(desktop.primaryScreen())
+        self.toolbar.move(screen.left() + screen.width() // 2 - 300, screen.top() + 20)
+        self.toolbar.show()
         self.toolbar.raise_()
-        self.status_label.raise_()
+        self.toolbar.activateWindow()
+        
+        self.canvas.setFocus()
+    
+    def close(self):
+        self.toolbar.close()
+        self.canvas.close()
+        self.app.quit()
+    
+    def run(self):
+        self.show()
+        sys.exit(self.app.exec_())
 
 
 def main():
-    app = QApplication(sys.argv)
-    app.setStyle('Fusion')
-    
-    whiteboard = WhiteboardWindow()
-    whiteboard.show()
-    
-    sys.exit(app.exec_())
+    app = ScreenPenApp()
+    app.run()
 
 
 if __name__ == "__main__":

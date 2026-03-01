@@ -12,7 +12,7 @@ import webbrowser
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QFrame, QGridLayout,
                              QLineEdit, QGraphicsDropShadowEffect, QMessageBox,
-                             QShortcut)
+                             QShortcut, QTextEdit, QDialog)
 from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtGui import QFont, QKeySequence, QColor, QPainter, QLinearGradient, QPalette, QBrush, QPixmap
 from settings_manager import ConfigManager
@@ -158,6 +158,7 @@ class ModernMainWindow(QMainWindow):
         super().__init__()
         self.config = config
         self.setWindowTitle("RAILGUN 多功能桌面应用")
+        self.setWindowFlags(Qt.FramelessWindowHint)
         
         self.load_window_state()
         self.setup_ui()
@@ -199,14 +200,14 @@ class ModernMainWindow(QMainWindow):
         """设置UI"""
         self.setStyleSheet("""
             QMainWindow {
-                background: #1A1A1A;
+                background: transparent;
             }
         """)
         
         central_widget = QWidget()
         central_widget.setStyleSheet("""
             QWidget {
-                background: #1A1A1A;
+                background: transparent;
             }
         """)
         self.setCentralWidget(central_widget)
@@ -310,9 +311,78 @@ class ModernMainWindow(QMainWindow):
         top_bar_layout.addWidget(theme_btn)
         top_bar_layout.addWidget(settings_btn)
         top_bar_layout.addWidget(backup_btn)
+        
+        top_bar_layout.addSpacing(10)
+        
+        min_btn = QPushButton("─")
+        min_btn.setFixedSize(40, 32)
+        min_btn.setStyleSheet("""
+            QPushButton {
+                background: transparent;
+                color: #fff;
+                border: none;
+                font-size: 16px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+        """)
+        min_btn.clicked.connect(self.showMinimized)
+        
+        max_btn = QPushButton("□")
+        max_btn.setFixedSize(40, 32)
+        max_btn.setStyleSheet("""
+            QPushButton {
+                background: transparent;
+                color: #fff;
+                border: none;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+        """)
+        max_btn.clicked.connect(self.toggle_maximize)
+        
+        close_btn = QPushButton("✕")
+        close_btn.setFixedSize(40, 32)
+        close_btn.setStyleSheet("""
+            QPushButton {
+                background: transparent;
+                color: #fff;
+                border: none;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background: #e81123;
+                color: #fff;
+            }
+        """)
+        close_btn.clicked.connect(self.close)
+        
+        top_bar_layout.addWidget(min_btn)
+        top_bar_layout.addWidget(max_btn)
+        top_bar_layout.addWidget(close_btn)
 
         top_bar.setLayout(top_bar_layout)
         return top_bar
+    
+    def toggle_maximize(self):
+        if self.isMaximized():
+            self.showNormal()
+        else:
+            self.showMaximized()
+    
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+    
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.dragPosition)
+            event.accept()
 
     def create_recent_frame(self):
         """创建最近使用区域"""
@@ -358,6 +428,8 @@ class ModernMainWindow(QMainWindow):
             ("🎮 宏控制工具", self.open_macro, "Ctrl+7"),
             ("✏️ 屏幕画笔", self.open_screen_pen, "Ctrl+8"),
             ("🐍 贪吃蛇游戏", self.open_snakes, "Ctrl+9"),
+            ("📱 扫码登录", self.open_qrcode_scanner, "Ctrl+Shift+S"),
+            ("🔔 自动更新检测", self.open_auto_update, "Ctrl+Shift+U"),
         ]
 
         for idx, (btn_text, btn_handler, shortcut) in enumerate(btn_configs):
@@ -448,19 +520,16 @@ class ModernMainWindow(QMainWindow):
         """使用QLabel显示背景图片"""
         try:
             if not hasattr(self, 'bg_label'):
-                self.bg_label = QLabel(self.content_widget)
+                self.bg_label = QLabel(self)
                 self.bg_label.setObjectName("bgLabel")
-            
-            # 确保背景label在最底层
-            self.bg_label.lower()
+                self.bg_label.lower()
             
             pixmap = QPixmap(file_path)
             if pixmap.isNull():
                 pixmap = QPixmap(os.path.normpath(file_path))
             
             if not pixmap.isNull():
-                # 缩放图片以覆盖整个区域（类似CSS的cover）
-                size = self.content_widget.size()
+                size = self.size()
                 scaled = pixmap.scaled(
                     size,
                     Qt.IgnoreAspectRatio,
@@ -468,7 +537,8 @@ class ModernMainWindow(QMainWindow):
                 )
                 self.bg_label.setPixmap(scaled)
                 self.bg_label.setGeometry(0, 0, size.width(), size.height())
-                self.bg_label.setAlignment(Qt.AlignCenter)
+                self.bg_label.lower()
+                self.bg_label.stackUnder(self.centralWidget())
                 print(f"[主窗口] 背景图片已加载: {file_path}")
             else:
                 print(f"[错误] 无法加载图片: {file_path}")
@@ -568,18 +638,193 @@ class ModernMainWindow(QMainWindow):
     def open_macro(self):
         """打开宏控制工具"""
         self.record_recent_function("macro")
-        QMessageBox.information(self, "提示", "宏控制工具开发中...")
+        try:
+            import subprocess
+            import os
+            script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Macro", "macro.py")
+            if os.path.exists(script_path):
+                subprocess.Popen(["python", script_path])
+            else:
+                QMessageBox.warning(self, "错误", "未找到宏控制工具")
+        except Exception as e:
+            QMessageBox.warning(self, "错误", f"启动失败: {e}")
 
     def open_screen_pen(self):
         """打开屏幕画笔"""
         self.record_recent_function("screen_pen")
-        QMessageBox.information(self, "提示", "屏幕画笔开发中...")
+        try:
+            import subprocess
+            import os
+            script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Tools", "Screen_Pen", "main_screen_pen.py")
+            if os.path.exists(script_path):
+                subprocess.Popen(["python", script_path])
+            else:
+                QMessageBox.warning(self, "错误", "未找到屏幕画笔工具")
+        except Exception as e:
+            QMessageBox.warning(self, "错误", f"启动失败: {e}")
 
     def open_snakes(self):
         """打开贪吃蛇游戏"""
         self.record_recent_function("snakes")
-        QMessageBox.information(self, "提示", "贪吃蛇游戏开发中...")
-
+        try:
+            import subprocess
+            import os
+            script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "GAMES", "SNAKES", "main_snakes.py")
+            print(f"[贪吃蛇] 脚本路径: {script_path}")
+            print(f"[贪吃蛇] 文件存在: {os.path.exists(script_path)}")
+            if os.path.exists(script_path):
+                subprocess.Popen(["python", script_path], creationflags=subprocess.CREATE_NEW_CONSOLE)
+            else:
+                QMessageBox.warning(self, "错误", "未找到贪吃蛇游戏")
+        except Exception as e:
+            print(f"[贪吃蛇] 错误: {e}")
+            QMessageBox.warning(self, "错误", f"启动失败: {e}")
+    
+    def open_qrcode_scanner(self):
+        """打开扫码登录功能"""
+        self.record_recent_function("扫码登录")
+        try:
+            import subprocess
+            import os
+            script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "saoma", "bilibili_qrcode.py")
+            if os.path.exists(script_path):
+                subprocess.Popen(["python", script_path, "--gui"])
+            else:
+                QMessageBox.warning(self, "错误", "未找到扫码模块")
+        except Exception as e:
+            QMessageBox.warning(self, "错误", f"启动扫码失败: {e}")
+    
+    def open_auto_update(self):
+        """打开自动更新检测功能"""
+        self.record_recent_function("自动更新检测")
+        self.show_auto_update_dialog()
+    
+    def show_auto_update_dialog(self):
+        """显示自动更新检测对话框"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("原神自动更新检测")
+        dialog.setMinimumSize(500, 400)
+        dialog.setModal(True)
+        
+        from PyQt5.QtCore import pyqtSignal, QObject
+        
+        class UpdateSignals(QObject):
+            log_signal = pyqtSignal(str)
+            status_signal = str
+            finish_signal = pyqtSignal()
+        
+        layout = QVBoxLayout()
+        
+        title = QLabel("🎮 原神自动更新检测工具")
+        title.setFont(QFont("Microsoft YaHei UI", 14, QFont.Bold))
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet("color: #00d4ff; padding: 10px;")
+        layout.addWidget(title)
+        
+        status_label = QLabel("状态: 就绪")
+        status_label.setStyleSheet("color: #00ff88; font-size: 12px; padding: 5px;")
+        layout.addWidget(status_label)
+        
+        log_text = QTextEdit()
+        log_text.setReadOnly(True)
+        log_text.setMaximumHeight(200)
+        log_text.setStyleSheet("""
+            QTextEdit {
+                background: rgba(0, 0, 0, 0.5);
+                color: #00ff88;
+                border: 1px solid #00d4ff;
+                border-radius: 5px;
+                padding: 10px;
+                font-family: Consolas, monospace;
+            }
+        """)
+        layout.addWidget(log_text)
+        
+        button_layout = QHBoxLayout()
+        
+        run_btn = QPushButton("🔍 立即检测")
+        run_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00d4ff, stop:1 #00ff88);
+                color: #000;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 20px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00ffaa, stop:1 #55ffaa);
+            }
+        """)
+        
+        close_btn = QPushButton("关闭")
+        close_btn.setStyleSheet("""
+            QPushButton {
+                background: rgba(255, 255, 255, 0.1);
+                color: #fff;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 8px;
+                padding: 10px 20px;
+            }
+            QPushButton:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+        """)
+        
+        button_layout.addWidget(run_btn)
+        button_layout.addWidget(close_btn)
+        layout.addLayout(button_layout)
+        
+        dialog.setLayout(layout)
+        
+        signals = UpdateSignals()
+        signals.log_signal.connect(lambda msg: log_text.append(msg))
+        signals.finish_signal.connect(lambda: run_btn.setEnabled(True))
+        
+        def run_detection():
+            log_text.clear()
+            status_label.setText("状态: 检测中...")
+            run_btn.setEnabled(False)
+            
+            import threading
+            
+            def detect_thread():
+                try:
+                    import subprocess
+                    import os
+                    
+                    script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "autoupdata", "main.py")
+                    if os.path.exists(script_path):
+                        process = subprocess.Popen(
+                            ["python", script_path, "-r"],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            text=True,
+                            cwd=os.path.dirname(script_path)
+                        )
+                        
+                        for line in iter(process.stdout.readline, ''):
+                            if line:
+                                signals.log_signal.emit(line.strip())
+                        
+                        process.wait()
+                        status_label.setText("状态: 检测完成 ✓")
+                    else:
+                        signals.log_signal.emit("[错误] 未找到自动更新检测脚本")
+                        status_label.setText("状态: 文件未找到")
+                except Exception as e:
+                    signals.log_signal.emit(f"[错误] {e}")
+                    status_label.setText("状态: 检测失败")
+                finally:
+                    signals.finish_signal.emit()
+            
+            threading.Thread(target=detect_thread, daemon=True).start()
+        
+        run_btn.clicked.connect(run_detection)
+        close_btn.clicked.connect(dialog.close)
+        
+        dialog.show()
+    
     def open_forum(self):
         """打开论坛"""
         self.record_recent_function("forum")
@@ -612,10 +857,15 @@ class ModernMainWindow(QMainWindow):
     def resizeEvent(self, event):
         """窗口大小改变时更新背景"""
         super().resizeEvent(event)
-        # 窗口大小改变时更新背景图片位置和大小
-        if hasattr(self, 'bg_label') and self.bg_label:
-            size = self.content_widget.size()
+        if hasattr(self, 'bg_label') and self.bg_label and self.bg_label.pixmap():
+            size = self.size()
             self.bg_label.setGeometry(0, 0, size.width(), size.height())
+            pixmap = self.bg_label.pixmap().scaled(
+                size,
+                Qt.IgnoreAspectRatio,
+                Qt.SmoothTransformation
+            )
+            self.bg_label.setPixmap(pixmap)
 
 
 class ForumServer:
@@ -729,7 +979,6 @@ def main():
         import traceback
         traceback.print_exc()
         try:
-            from PyQt5.QtWidgets import QTextEdit, QDialog
             dialog = QDialog()
             dialog.setWindowTitle("错误详情")
             dialog.setMinimumSize(600, 400)
